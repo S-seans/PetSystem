@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.success.mapper.AdoptionSuccessMapper">
+    
+    <resultMap type="AdoptionSuccess" id="AdoptionSuccessResult">
+        <result property="successId"    column="success_id"    />
+        <result property="requestId"    column="request_id"    />
+        <result property="petId"    column="pet_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="adoptTime"    column="adopt_time"    />
+        <result property="followUpDate"    column="follow_up_date"    />
+        <result property="status"    column="status"    />
+        <result property="remark"    column="remark"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectAdoptionSuccessVo">
+        select success_id, request_id, pet_id, user_id, adopt_time, follow_up_date, status, remark, create_time from tb_adoption_success
+    </sql>
+
+    <select id="selectAdoptionSuccessList" parameterType="AdoptionSuccess" resultMap="AdoptionSuccessResult">
+        <include refid="selectAdoptionSuccessVo"/>
+        <where>  
+            <if test="requestId != null "> and request_id = #{requestId}</if>
+            <if test="petId != null "> and pet_id = #{petId}</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="adoptTime != null "> and adopt_time = #{adoptTime}</if>
+            <if test="followUpDate != null "> and follow_up_date = #{followUpDate}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectAdoptionSuccessBySuccessId" parameterType="Long" resultMap="AdoptionSuccessResult">
+        <include refid="selectAdoptionSuccessVo"/>
+        where success_id = #{successId}
+    </select>
+
+    <insert id="insertAdoptionSuccess" parameterType="AdoptionSuccess" useGeneratedKeys="true" keyProperty="successId">
+        insert into tb_adoption_success
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="requestId != null">request_id,</if>
+            <if test="petId != null">pet_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="adoptTime != null">adopt_time,</if>
+            <if test="followUpDate != null">follow_up_date,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="requestId != null">#{requestId},</if>
+            <if test="petId != null">#{petId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="adoptTime != null">#{adoptTime},</if>
+            <if test="followUpDate != null">#{followUpDate},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateAdoptionSuccess" parameterType="AdoptionSuccess">
+        update tb_adoption_success
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="requestId != null">request_id = #{requestId},</if>
+            <if test="petId != null">pet_id = #{petId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="adoptTime != null">adopt_time = #{adoptTime},</if>
+            <if test="followUpDate != null">follow_up_date = #{followUpDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </trim>
+        where success_id = #{successId}
+    </update>
+
+    <delete id="deleteAdoptionSuccessBySuccessId" parameterType="Long">
+        delete from tb_adoption_success where success_id = #{successId}
+    </delete>
+
+    <delete id="deleteAdoptionSuccessBySuccessIds" parameterType="String">
+        delete from tb_adoption_success where success_id in 
+        <foreach item="successId" collection="array" open="(" separator="," close=")">
+            #{successId}
+        </foreach>
+    </delete>
+</mapper>
