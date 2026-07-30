@@ -113,4 +113,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{petId}
         </foreach>
     </delete>
+
+    <select id="countPetByStatus" parameterType="String" resultType="Long">
+        select count(*) from tb_pet
+        <where>
+            <if test="status != null and status != ''">
+                status = #{status}
+            </if>
+        </where>
+    </select>
 </mapper>

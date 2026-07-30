@@ -53,9 +53,16 @@ public interface AdoptionSuccessMapper
 
     /**
      * 批量删除领养成功记录
-     * 
+     *
      * @param successIds 需要删除的数据主键集合
      * @return 结果
      */
     public int deleteAdoptionSuccessBySuccessIds(Long[] successIds);
+
+    /**
+     * 统计领养成功记录数量
+     *
+     * @return 数量
+     */
+    public Long countAdoptionSuccess();
 }

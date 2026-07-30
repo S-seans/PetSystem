@@ -48,6 +48,16 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/adopt/public',
+    component: () => import('@/views/public/PetGallery'),
+    hidden: true
+  },
+  {
+    path: '/adopt/apply/:petId(\\d+)',
+    component: () => import('@/views/public/PetApply'),
+    hidden: true
+  },
+  {
     path: "/:pathMatch(.*)*",
     component: () => import('@/views/error/404'),
     hidden: true

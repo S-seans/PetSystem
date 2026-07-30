@@ -67,4 +67,11 @@ public interface IAdoptionSuccessService
      * @return 结果
      */
     public int deleteAdoptionSuccessBySuccessId(Long successId);
+
+    /**
+     * 统计领养成功记录数量
+     *
+     * @return 数量
+     */
+    public Long countAdoptionSuccess();
 }

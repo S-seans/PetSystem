@@ -18,6 +18,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.pet.domain.Pet;
 import com.ruoyi.pet.service.IPetService;
+import com.ruoyi.success.service.IAdoptionSuccessService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
@@ -33,6 +34,23 @@ public class PetController extends BaseController
 {
     @Autowired
     private IPetService petService;
+
+    @Autowired
+    private IAdoptionSuccessService adoptionSuccessService;
+
+    /**
+     * 获取首页统计数据
+     */
+    @PreAuthorize("@ss.hasPermi('pet:pet:list')")
+    @GetMapping("/dashboard/stats")
+    public AjaxResult dashboardStats()
+    {
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("waiting", petService.countPetByStatus("可领养"));
+        ajax.put("adoptedCount", adoptionSuccessService.countAdoptionSuccess());
+        ajax.put("totalPets", petService.countPetByStatus(null));
+        return ajax;
+    }
 
     /**
      * 查询宠物信息列表

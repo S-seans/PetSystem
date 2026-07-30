@@ -12,7 +12,7 @@ import { connectSse, disconnect } from '@/utils/sse'
 
 NProgress.configure({ showSpinner: false })
 
-const whiteList = ['/login', '/register']
+const whiteList = ['/login', '/register', '/adopt/public']
 
 const isWhiteList = (path) => {
   return whiteList.some(pattern => isPathMatch(pattern, path))
@@ -60,8 +60,12 @@ router.beforeEach((to, from, next) => {
     if (isWhiteList(to.path)) {
       // 在免登录白名单，直接进入
       next()
+    } else if (to.path === '/' || to.path === '/index') {
+      // 未登录时访问首页重定向到公开宠物展示页
+      next('/adopt/public')
+      NProgress.done()
     } else {
-      next(`/login?redirect=${to.fullPath}`) // 否则全部重定向到登录页
+      next(`/login?redirect=${to.fullPath}`) // 其他受保护页面重定向到登录页
       NProgress.done()
     }
   }

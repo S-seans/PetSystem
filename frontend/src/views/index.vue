@@ -47,6 +47,42 @@
       </el-col>
     </el-row>
 
+    <!-- 实时统计 -->
+    <el-row :gutter="20" style="margin-top: 20px">
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="stat-item">
+            <div class="stat-number" style="color: #67C23A">{{ stats.waiting }}</div>
+            <div class="stat-label">待领养宠物</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="stat-item">
+            <div class="stat-number" style="color: #409EFF">{{ stats.adoptedCount }}</div>
+            <div class="stat-label">已领养数</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="stat-item">
+            <div class="stat-number" style="color: #E6A23C">{{ stats.totalPets }}</div>
+            <div class="stat-label">宠物总数</div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="stat-item">
+            <div class="stat-number" style="color: #F56C6C">{{ stats.todayVisits }}</div>
+            <div class="stat-label">今日访问</div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <el-divider />
 
     <!-- 通知公告 -->
@@ -72,20 +108,27 @@
 </template>
 
 <script setup name="Index">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { getDashboardStats } from '@/api/dashboard'
 
 const version = ref('3.9.0')
 
 const stats = ref({
-  waiting: 23,
-  adopted: 156,
-  volunteers: 45,
-  todayVisits: 128
+  waiting: 0,
+  adoptedCount: 0,
+  totalPets: 0,
+  todayVisits: 0
 })
 
 function goTarget(url) {
   window.open(url, '_blank')
 }
+
+onMounted(() => {
+  getDashboardStats().then(res => {
+    stats.value = { ...stats.value, ...res }
+  })
+})
 </script>
 
 <style scoped lang="scss">

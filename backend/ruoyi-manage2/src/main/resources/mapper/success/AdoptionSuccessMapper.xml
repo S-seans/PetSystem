@@ -86,4 +86,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{successId}
         </foreach>
     </delete>
+
+    <select id="countAdoptionSuccess" resultType="Long">
+        select count(*) from tb_adoption_success
+    </select>
 </mapper>

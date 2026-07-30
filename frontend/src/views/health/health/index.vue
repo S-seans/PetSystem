@@ -42,6 +42,15 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
+          type="primary"
+          plain
+          icon="Plus"
+          @click="handleAdd"
+          v-hasPermi="['health:health:add']"
+        >新增</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
           type="success"
           plain
           icon="Edit"
@@ -49,6 +58,16 @@
           @click="handleUpdate"
           v-hasPermi="['health:health:edit']"
         >修改</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="danger"
+          plain
+          icon="Delete"
+          :disabled="multiple"
+          @click="handleDelete"
+          v-hasPermi="['health:health:remove']"
+        >删除</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button

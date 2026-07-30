@@ -140,6 +140,15 @@ public class AdoptionSuccessServiceImpl implements IAdoptionSuccessService
     }
 
     /**
+     * 统计领养成功记录数量
+     */
+    @Override
+    public Long countAdoptionSuccess()
+    {
+        return adoptionSuccessMapper.countAdoptionSuccess();
+    }
+
+    /**
      * 更新宠物状态
      */
     private void updatePetStatus(Long petId, String status) {

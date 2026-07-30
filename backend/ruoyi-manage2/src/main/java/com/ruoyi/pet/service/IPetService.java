@@ -58,4 +58,12 @@ public interface IPetService
      * @return 结果
      */
     public int deletePetByPetId(Long petId);
+
+    /**
+     * 按状态统计宠物数量
+     *
+     * @param status 状态
+     * @return 数量
+     */
+    public Long countPetByStatus(String status);
 }

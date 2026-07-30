@@ -53,9 +53,17 @@ public interface PetMapper
 
     /**
      * 批量删除宠物信息
-     * 
+     *
      * @param petIds 需要删除的数据主键集合
      * @return 结果
      */
     public int deletePetByPetIds(Long[] petIds);
+
+    /**
+     * 按状态统计宠物数量
+     *
+     * @param status 状态
+     * @return 数量
+     */
+    public Long countPetByStatus(String status);
 }

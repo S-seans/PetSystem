@@ -133,4 +133,16 @@ public class PetServiceImpl implements IPetService
         // 再删除宠物信息
         return petMapper.deletePetByPetId(petId);
     }
+
+    /**
+     * 按状态统计宠物数量
+     *
+     * @param status 状态
+     * @return 数量
+     */
+    @Override
+    public Long countPetByStatus(String status)
+    {
+        return petMapper.countPetByStatus(status);
+    }
 }
