@@ -33,6 +33,13 @@ public class ResourcesConfig implements WebMvcConfigurer
         registry.addResourceHandler(Constants.RESOURCE_PREFIX + "/**")
                 .addResourceLocations("file:" + RuoYiConfig.getProfile() + "/");
 
+        /** 宠物图片：优先 classpath 内置图片，其次上传目录，缓存 7 天 */
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("classpath:/static/images/", "file:" + RuoYiConfig.getProfile() + "/images/")
+                .setCacheControl(CacheControl.maxAge(7, TimeUnit.DAYS).cachePublic())
+                .resourceChain(true)
+                .addResolver(new PetImageResourceResolver());
+
         /** swagger配置 */
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/springfox-swagger-ui/")

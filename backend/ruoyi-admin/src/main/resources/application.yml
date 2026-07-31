@@ -30,6 +30,11 @@ server:
       max: 800
       # Tomcat启动初始化的线程数，默认值10
       min-spare: 100
+  compression:
+    # 开启 HTTP 压缩，减少页面/接口传输体积
+    enabled: true
+    min-response-size: 1024
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,image/svg+xml
 
 # 日志配置
 logging:

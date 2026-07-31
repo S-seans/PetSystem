@@ -14,7 +14,7 @@
     <main class="public-main">
       <div class="section-title">
         <h2>等待领养的宠物</h2>
-        <p>共 {{ pets.length }} 只小可爱等待温暖的家</p>
+        <p>共 {{ total }} 只小可爱等待温暖的家</p>
       </div>
 
       <el-row :gutter="24" v-loading="loading">
@@ -25,7 +25,15 @@
                 :src="pet.imageUrl ? (isExternal(pet.imageUrl) ? pet.imageUrl : baseApi + pet.imageUrl) : ''"
                 fit="cover"
                 class="pet-image"
+                lazy
+                :preview-src-list="pet.imageUrl ? [isExternal(pet.imageUrl) ? pet.imageUrl : baseApi + pet.imageUrl] : []"
+                preview-teleported
               >
+                <template #placeholder>
+                  <div class="image-placeholder">
+                    <el-icon class="is-loading" :size="32"><Loading /></el-icon>
+                  </div>
+                </template>
                 <template #error>
                   <div class="image-placeholder">
                     <el-icon :size="40"><PictureFilled /></el-icon>
@@ -52,6 +60,17 @@
       </el-row>
 
       <el-empty v-if="!loading && pets.length === 0" description="暂无待领养的宠物" />
+
+      <div class="pagination-wrap" v-if="!loading && total > 0">
+        <el-pagination
+          layout="prev, pager, next"
+          background
+          :total="total"
+          :page-size="pageSize"
+          :current-page="pageNum"
+          @current-change="handlePageChange"
+        />
+      </div>
     </main>
 
     <el-dialog v-model="detailVisible" :title="currentPet?.name" width="600px" destroy-on-close>
@@ -98,13 +117,16 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getToken } from '@/utils/auth'
 import { isExternal } from '@/utils/validate'
-import { PictureFilled } from '@element-plus/icons-vue'
+import { PictureFilled, Loading } from '@element-plus/icons-vue'
 import { listPublicPets } from '@/api/public/pet'
 
 const router = useRouter()
 const baseApi = import.meta.env.VITE_APP_BASE_API
 
 const pets = ref([])
+const total = ref(0)
+const pageNum = ref(1)
+const pageSize = 12
 const loading = ref(true)
 const detailVisible = ref(false)
 const currentPet = ref(null)
@@ -132,13 +154,23 @@ function goAdmin() {
   router.push('/index')
 }
 
-onMounted(() => {
-  listPublicPets().then(res => {
-    pets.value = res.data || []
+function getList() {
+  loading.value = true
+  listPublicPets({ pageNum: pageNum.value, pageSize }).then(res => {
+    pets.value = res.rows || []
+    total.value = res.total || 0
   }).finally(() => {
     loading.value = false
   })
-})
+}
+
+function handlePageChange(page) {
+  pageNum.value = page
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  getList()
+}
+
+onMounted(getList)
 </script>
 
 <style scoped>
@@ -236,6 +268,11 @@ onMounted(() => {
 }
 .pet-actions {
   text-align: right;
+}
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
 }
 .detail-content {
   padding: 0;

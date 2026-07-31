@@ -122,4 +122,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
         </where>
     </select>
+
+    <sql id="selectPublicPetVo">
+        select pet_id, name, breed, age, gender, weight, status, image_url, description, rescue_date from tb_pet
+    </sql>
+
+    <select id="selectPublicPetList" parameterType="Pet" resultMap="PetResult">
+        <include refid="selectPublicPetVo"/>
+        <where>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="breed != null  and breed != ''"> and breed = #{breed}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectPublicPetByPetId" parameterType="Long" resultMap="PetResult">
+        <include refid="selectPublicPetVo"/>
+        where pet_id = #{petId}
+    </select>
 </mapper>

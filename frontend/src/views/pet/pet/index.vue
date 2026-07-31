@@ -173,7 +173,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="照片" prop="imageUrl">
-          <image-upload v-model="form.imageUrl"/>
+          <image-upload v-model="form.imageUrl" :action="'/pet/pet/upload'" :file-size="2" />
         </el-form-item>
         <el-form-item label="状况描述" prop="description">
           <el-input v-model="form.description" type="textarea" placeholder="请输入内容" />

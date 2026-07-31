@@ -1,10 +1,11 @@
 import request from '@/utils/request'
 
-export function listPublicPets() {
+export function listPublicPets(query) {
   return request({
     url: '/api/public/pets',
     method: 'get',
-    headers: { isToken: false }
+    headers: { isToken: false },
+    params: query
   })
 }
 

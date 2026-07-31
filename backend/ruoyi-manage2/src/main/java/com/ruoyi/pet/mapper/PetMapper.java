@@ -66,4 +66,20 @@ public interface PetMapper
      * @return 数量
      */
     public Long countPetByStatus(String status);
+
+    /**
+     * 查询公开宠物信息列表（仅展示字段）
+     *
+     * @param pet 宠物信息
+     * @return 宠物信息集合
+     */
+    public List<Pet> selectPublicPetList(Pet pet);
+
+    /**
+     * 查询公开宠物信息（仅展示字段）
+     *
+     * @param petId 宠物信息主键
+     * @return 宠物信息
+     */
+    public Pet selectPublicPetByPetId(Long petId);
 }
