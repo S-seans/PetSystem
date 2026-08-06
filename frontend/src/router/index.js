@@ -58,6 +58,16 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/adopt/profile',
+    component: () => import('@/views/public/UserProfile'),
+    hidden: true
+  },
+  {
+    path: '/adopt/my-applications',
+    component: () => import('@/views/public/MyApplications'),
+    hidden: true
+  },
+  {
     path: "/:pathMatch(.*)*",
     component: () => import('@/views/error/404'),
     hidden: true

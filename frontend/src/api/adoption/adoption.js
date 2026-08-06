@@ -35,6 +35,23 @@ export function updateAdoption(data) {
   })
 }
 
+// 查询当前登录用户自己的领养申请列表（用户端）
+export function listMyAdoption(query) {
+  return request({
+    url: '/adoption/adoption/my',
+    method: 'get',
+    params: query
+  })
+}
+
+// 撤销当前登录用户自己的领养申请（用户端）
+export function delMyAdoption(requestId) {
+  return request({
+    url: '/adoption/adoption/my/' + requestId,
+    method: 'delete'
+  })
+}
+
 // 删除领养申请
 export function delAdoption(requestId) {
   return request({

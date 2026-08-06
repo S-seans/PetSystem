@@ -50,6 +50,45 @@ public class AdoptionRequestController extends BaseController
     }
 
     /**
+     * 查询当前登录用户自己的领养申请列表（用户端）
+     */
+    @GetMapping("/my")
+    public TableDataInfo my(AdoptionRequest adoptionRequest)
+    {
+        startPage();
+        if (adoptionRequest == null)
+        {
+            adoptionRequest = new AdoptionRequest();
+        }
+        adoptionRequest.setUserId(SecurityUtils.getLoginUser().getUserId());
+        List<AdoptionRequest> list = adoptionRequestService.selectAdoptionRequestList(adoptionRequest);
+        return getDataTable(list);
+    }
+
+    /**
+     * 撤销当前登录用户自己的待审核领养申请（用户端）
+     */
+    @DeleteMapping("/my/{requestId}")
+    public AjaxResult myRemove(@PathVariable("requestId") Long requestId)
+    {
+        SysUser currentUser = SecurityUtils.getLoginUser().getUser();
+        AdoptionRequest adoptionRequest = adoptionRequestService.selectAdoptionRequestByRequestId(requestId);
+        if (adoptionRequest == null)
+        {
+            return error("申请记录不存在");
+        }
+        if (!currentUser.getUserId().equals(adoptionRequest.getUserId()))
+        {
+            return error("无权撤销此申请记录");
+        }
+        if (!"pending".equals(adoptionRequest.getStatus()))
+        {
+            return error("该申请已审核，无法撤销");
+        }
+        return toAjax(adoptionRequestService.deleteAdoptionRequestByRequestIds(new Long[] { requestId }));
+    }
+
+    /**
      * 导出领养申请列表
      */
     @PreAuthorize("@ss.hasPermi('adoption:adoption:export')")

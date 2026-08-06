@@ -39,6 +39,9 @@ public class SysRegisterService
     {
         String nickname = registerBody.getNickname();
         String password = registerBody.getPassword();
+        String phonenumber = registerBody.getPhonenumber();
+        String email = registerBody.getEmail();
+        String sex = registerBody.getSex();
 
         boolean captchaEnabled = configService.selectCaptchaEnabled();
         if (captchaEnabled)
@@ -59,12 +62,19 @@ public class SysRegisterService
         {
             throw new ServiceException("密码长度必须在5到20个字符之间");
         }
+        if (StringUtils.isEmpty(phonenumber))
+        {
+            throw new ServiceException("手机号码不能为空");
+        }
 
         String account = generateUniqueAccount();
 
         SysUser sysUser = new SysUser();
         sysUser.setUserName(account);
         sysUser.setNickName(nickname);
+        sysUser.setPhonenumber(phonenumber);
+        sysUser.setEmail(email);
+        sysUser.setSex(sex);
         sysUser.setPwdUpdateDate(DateUtils.getNowDate());
         sysUser.setPassword(SecurityUtils.encryptPassword(password));
 

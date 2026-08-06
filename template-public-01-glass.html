@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模板 A · 毛玻璃质感 · 爱心宠物领养平台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+    background: #f4f6fb;
+    color: #2b2f38;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  /* 背景漂浮色块 */
+  .bg-blob { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; opacity: .55; }
+  .bg-blob.b1 { width: 420px; height: 420px; background: #a78bfa; top: -120px; left: -100px; }
+  .bg-blob.b2 { width: 380px; height: 380px; background: #7dd3fc; top: 20%; right: -140px; }
+  .bg-blob.b3 { width: 460px; height: 460px; background: #f9a8d4; bottom: -160px; left: 30%; }
+
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+
+  /* ===== 顶部导航 ===== */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    background: rgba(255,255,255,.72);
+    border-bottom: 1px solid rgba(255,255,255,.6);
+  }
+  .nav { max-width: 1180px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; letter-spacing: .5px; }
+  .brand .logo {
+    width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 20px;
+    background: linear-gradient(135deg,#8b5cf6,#ec4899); color: #fff; box-shadow: 0 6px 16px rgba(139,92,246,.35);
+  }
+  .nav-links { display: flex; align-items: center; gap: 26px; color: #6b7280; font-size: 14px; }
+  .nav-links a { text-decoration: none; color: inherit; font-weight: 500; transition: color .2s; }
+  .nav-links a:hover, .nav-links a.active { color: #8b5cf6; }
+  .btn { border: none; cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 12px; padding: 10px 20px; transition: transform .15s, box-shadow .2s; }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-primary { background: linear-gradient(135deg,#8b5cf6,#6366f1); color: #fff; box-shadow: 0 8px 20px rgba(99,102,241,.35); }
+  .btn-ghost { background: rgba(255,255,255,.8); color: #4b5563; border: 1px solid rgba(0,0,0,.06); }
+
+  /* ===== Hero ===== */
+  .hero {
+    margin: 40px 0 8px; padding: 64px 56px; border-radius: 28px; color: #fff; text-align: center;
+    background: linear-gradient(120deg,#8b5cf6 0%,#6366f1 45%,#3b82f6 100%);
+    box-shadow: 0 24px 60px rgba(99,102,241,.4);
+    position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: "🐾"; position: absolute; font-size: 220px; right: -30px; bottom: -60px; opacity: .12; transform: rotate(-12deg);
+  }
+  .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: 1px; }
+  .hero p { margin: 14px auto 28px; font-size: 17px; opacity: .92; max-width: 520px; }
+  .hero .stats { display: flex; gap: 48px; justify-content: center; }
+  .hero .stat b { display: block; font-size: 30px; font-weight: 800; }
+  .hero .stat span { font-size: 13px; opacity: .85; }
+
+  /* ===== 筛选 ===== */
+  .filters { display: flex; gap: 12px; flex-wrap: wrap; margin: 30px 0 22px; }
+  .chip {
+    border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.8); color: #6b7280;
+    padding: 9px 18px; border-radius: 999px; font-size: 14px; cursor: pointer; font-weight: 500;
+    backdrop-filter: blur(8px); transition: all .2s;
+  }
+  .chip:hover { transform: translateY(-1px); color: #8b5cf6; border-color: #8b5cf6; }
+  .chip.active { background: linear-gradient(135deg,#8b5cf6,#6366f1); color: #fff; border-color: transparent; box-shadow: 0 6px 14px rgba(99,102,241,.35); }
+
+  /* ===== 卡片网格 ===== */
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: rgba(255,255,255,.75); border-radius: 22px; overflow: hidden; cursor: pointer;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,.7);
+    box-shadow: 0 8px 24px rgba(30,41,59,.08);
+    transition: transform .25s ease, box-shadow .25s ease;
+    position: relative;
+  }
+  .card:hover { transform: translateY(-8px); box-shadow: 0 22px 44px rgba(30,41,59,.16); }
+  .card .thumb { height: 190px; display: grid; place-items: center; font-size: 86px; position: relative; }
+  .thumb::after { content: ""; position: absolute; inset: 0; }
+  .card .tag {
+    position: absolute; top: 14px; left: 14px; z-index: 2;
+    background: rgba(255,255,255,.9); color: #475569; font-size: 12px; font-weight: 700;
+    padding: 5px 11px; border-radius: 999px; backdrop-filter: blur(6px);
+  }
+  .card .gender {
+    position: absolute; top: 14px; right: 14px; z-index: 2; width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 15px; color: #fff;
+  }
+  .g-male { background: linear-gradient(135deg,#60a5fa,#3b82f6); }
+  .g-female { background: linear-gradient(135deg,#f472b6,#ec4899); }
+  .card .body { padding: 16px 18px 18px; }
+  .card .name { font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+  .card .name .fav { font-size: 15px; cursor: pointer; opacity: .5; transition: all .2s; }
+  .card .name .fav.on { opacity: 1; color: #ec4899; transform: scale(1.1); }
+  .card .meta { margin: 8px 0 14px; font-size: 13px; color: #8b93a3; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: #c6ccd6; }
+  .card .desc { font-size: 13px; color: #64748b; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 42px; }
+  .card .foot { display: flex; gap: 10px; margin-top: 14px; }
+  .card .foot .btn { flex: 1; padding: 9px 0; font-size: 13px; text-align: center; border-radius: 11px; }
+  .btn-soft { background: #eef2ff; color: #6366f1; }
+
+  /* ===== 页脚 ===== */
+  footer { margin: 56px 0 30px; text-align: center; color: #9aa2b0; font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+
+  <header>
+    <nav class="nav">
+      <div class="brand"><span class="logo">🐾</span>爱心宠物领养</div>
+      <div class="nav-links">
+        <a href="#" class="active">首页</a>
+        <a href="#">待领养</a>
+        <a href="#">成功故事</a>
+        <a href="#">关于我们</a>
+      </div>
+      <button class="btn btn-ghost">登录 / 注册</button>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>给它们一个温暖的家</h1>
+      <p>每一只小可爱都值得被爱。浏览、了解、申请领养，让流浪的它们不再孤单。</p>
+      <div class="stats">
+        <div class="stat"><b>128</b><span>待领养</span></div>
+        <div class="stat"><b>356</b><span>已领养</span></div>
+        <div class="stat"><b>92%</b><span>满意率</span></div>
+      </div>
+    </section>
+
+    <div class="filters">
+      <button class="chip active">全部</button>
+      <button class="chip">🐱 猫咪</button>
+      <button class="chip">🐶 狗狗</button>
+      <button class="chip">🐰 兔兔</button>
+      <button class="chip">🐹 其他</button>
+    </div>
+
+    <main class="grid" id="grid"></main>
+
+    <footer>© 2026 爱心宠物领养平台 · 用爱终结流浪</footer>
+  </div>
+
+<script>
+  const pets = [
+    { name: "糯米", breed: "英短蓝猫", age: 6, gender: "1", weight: 3.8, status: "可领养", desc: "性格温顺黏人，喜欢被摸下巴，已打完疫苗驱虫。", bg: "linear-gradient(135deg,#a5b4fc,#818cf8)", emoji: "🐱" },
+    { name: "旺财", breed: "金毛寻回犬", age: 14, gender: "1", weight: 22.5, status: "可领养", desc: "阳光大暖男，服从性高，适合有院子的家庭。", bg: "linear-gradient(135deg,#fcd34d,#f59e0b)", emoji: "🐶" },
+    { name: "雪球", breed: "布偶猫", age: 9, gender: "0", weight: 4.2, status: "可领养", desc: "安静优雅的小公主，蓝眼睛超治愈。", bg: "linear-gradient(135deg,#e0e7ff,#c7d2fe)", emoji: "🐱" },
+    { name: "来福", breed: "中华田园犬", age: 8, gender: "1", weight: 12.0, status: "可领养", desc: "机灵护主，看家一把好手，亲人爱撒娇。", bg: "linear-gradient(135deg,#fda4af,#fb7185)", emoji: "🐶" },
+    { name: "布丁", breed: "垂耳兔", age: 5, gender: "0", weight: 1.6, status: "可领养", desc: "软乎乎的小团子，爱吃胡萝卜，安静不吵闹。", bg: "linear-gradient(135deg,#fbcfe8,#f472b6)", emoji: "🐰" },
+    { name: "黑豆", breed: "德文卷毛猫", age: 12, gender: "1", weight: 3.1, status: "可领养", desc: "活泼爱玩，掉毛极少，适合对毛过敏的你。", bg: "linear-gradient(135deg,#94a3b8,#64748b)", emoji: "🐱" },
+    { name: "花卷", breed: "柯基犬", age: 16, gender: "0", weight: 10.4, status: "可领养", desc: "小短腿大能量，治愈系笑容，精力旺盛。", bg: "linear-gradient(135deg,#fde68a,#fbbf24)", emoji: "🐶" },
+    { name: "球球", breed: "金丝熊仓鼠", age: 4, gender: "1", weight: 0.12, status: "可领养", desc: "自带仓鼠轮，夜里跑酷选手，好养活。", bg: "linear-gradient(135deg,#fecaca,#f87171)", emoji: "🐹" }
+  ];
+  const grid = document.getElementById('grid');
+  grid.innerHTML = pets.map(p => `
+    <div class="card">
+      <div class="thumb" style="background:${p.bg}">${p.emoji}
+        <span class="tag">${p.breed}</span>
+        <span class="gender ${p.gender === '1' ? 'g-male' : 'g-female'}">${p.gender === '1' ? '♂' : '♀'}</span>
+      </div>
+      <div class="body">
+        <div class="name">${p.name}<span class="fav" onclick="this.classList.toggle('on')">♡</span></div>
+        <div class="meta"><span>${p.age}个月</span><span class="dot"></span><span>${p.weight}kg</span><span class="dot"></span><span class="tag" style="position:static;padding:2px 8px;color:#16a34a;background:#dcfce7;">${p.status}</span></div>
+        <div class="desc">${p.desc}</div>
+        <div class="foot">
+          <button class="btn btn-primary">申请领养</button>
+          <button class="btn btn-soft">查看详情</button>
+        </div>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  }));
+</script>
+</body>
+</html>

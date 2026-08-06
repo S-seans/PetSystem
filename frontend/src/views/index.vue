@@ -10,7 +10,6 @@
         <p>
           <b>当前版本:</b> <span>v{{ version }}</span>
         </p>
-        <el-button type="primary" size="medium" @click="goTarget('/adopt')">进入系统</el-button>
       </el-col>
 
       <!-- 右侧技术架构 -->
@@ -119,10 +118,6 @@ const stats = ref({
   totalPets: 0,
   todayVisits: 0
 })
-
-function goTarget(url) {
-  window.open(url, '_blank')
-}
 
 onMounted(() => {
   getDashboardStats().then(res => {
