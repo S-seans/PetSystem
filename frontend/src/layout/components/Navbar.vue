@@ -30,6 +30,8 @@
         </el-tooltip>
       </template>
 
+      <el-link class="right-menu-item back-home hover-effect" :underline="false" @click="goBackPublic">🏠 返回前台</el-link>
+
       <el-dropdown @command="handleCommand" class="avatar-container right-menu-item hover-effect" trigger="hover">
         <div class="avatar-wrapper">
           <img :src="userStore.avatar" class="user-avatar" />
@@ -55,6 +57,7 @@
 
 <script setup>
 import { ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'
 import Hamburger from '@/components/Hamburger'
@@ -70,6 +73,11 @@ import useSettingsStore from '@/store/modules/settings'
 const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
+const router = useRouter()
+
+function goBackPublic() {
+  router.push('/adopt/public')
+}
 
 function toggleSideBar() {
   appStore.toggleSideBar()
@@ -153,6 +161,13 @@ function toggleTheme() {
 
     &:focus {
       outline: none;
+    }
+
+    .back-home {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
     }
 
     .right-menu-item {

@@ -17,10 +17,10 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="年龄" prop="age">
+      <el-form-item label="年龄" prop="ageYear">
         <el-input
-          v-model="queryParams.age"
-          placeholder="请输入年龄(月)"
+          v-model="queryParams.ageYear"
+          placeholder="请输入年龄(年)"
           clearable
           @keyup.enter="handleQuery"
         />
@@ -100,7 +100,11 @@
       <el-table-column label="宠物ID" align="center" prop="petId" />
       <el-table-column label="宠物名称" align="center" prop="name" />
       <el-table-column label="品种" align="center" prop="breed" />
-      <el-table-column label="年龄(月)" align="center" prop="age" />
+      <el-table-column label="年龄" align="center" prop="age">
+        <template #default="scope">
+          <span>{{ formatPetAge(scope.row.age) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="性别" align="center" prop="gender">
         <template #default="scope">
           <span>{{ formatGender(scope.row.gender) }}</span>
@@ -154,8 +158,11 @@
         <el-form-item label="品种" prop="breed">
           <el-input v-model="form.breed" placeholder="请输入品种" />
         </el-form-item>
-        <el-form-item label="年龄(月)" prop="age">
-          <el-input v-model="form.age" placeholder="请输入年龄" />
+        <el-form-item label="年龄(年)" prop="ageYear">
+          <el-input v-model="form.ageYear" placeholder="请输入年龄(年)" />
+        </el-form-item>
+        <el-form-item label="年龄(月)" prop="ageMonth">
+          <el-input v-model="form.ageMonth" placeholder="请输入年龄(月)" />
         </el-form-item>
         <el-form-item label="性别" prop="gender">
           <el-select v-model="form.gender" placeholder="请选择性别">
@@ -202,6 +209,7 @@
 
 <script setup name="Pet">
 import { listPet, getPet, delPet, addPet, updatePet } from "@/api/pet/pet"
+import { formatPetAge, calcPetAgeMonths, splitPetAge } from "@/utils/petAge"
 
 const { proxy } = getCurrentInstance()
 
@@ -222,7 +230,7 @@ const data = reactive({
     pageSize: 10,
     name: null,
     breed: null,
-    age: null,
+    ageYear: null,
     gender: null,
     weight: null,
     status: null,
@@ -240,18 +248,63 @@ const data = reactive({
     status: [
       { required: true, message: "状态不能为空", trigger: "change" }
     ],
-    age: [
-      { pattern: /^\d+$/, message: "年龄必须为整数", trigger: "blur" }
+    ageYear: [
+      { validator: (rule, value, callback) => {
+        const y = form.value.ageYear
+        const m = form.value.ageMonth
+        const hasY = y !== null && y !== undefined && y !== ''
+        const hasM = m !== null && m !== undefined && m !== ''
+        if (!hasY && !hasM) {
+          callback(new Error("请填写年龄，年/月至少填一项"))
+        } else {
+          callback()
+        }
+      }, trigger: "blur" },
+      { pattern: /^\d+$/, message: "年龄(年)必须为整数", trigger: "blur" },
+      { validator: (rule, value, callback) => {
+        if (value !== null && value !== undefined && value !== '' && (Number(value) < 0 || Number(value) > 100)) {
+          callback(new Error("年龄(年)需在 0~100 之间"))
+        } else {
+          callback()
+        }
+      }, trigger: "blur" }
+    ],
+    ageMonth: [
+      { pattern: /^\d+$/, message: "年龄(月)必须为整数", trigger: "blur" },
+      { validator: (rule, value, callback) => {
+        if (value !== null && value !== undefined && value !== '' && Number(value) > 11) {
+          callback(new Error("年龄(月)需在 0~11 之间"))
+        } else {
+          callback()
+        }
+      }, trigger: "blur" }
     ]
   }
 })
 
 const { queryParams, form, rules } = toRefs(data)
 
+/** 构建查询参数：年龄(年) 转换为月份区间 */
+function buildQueryParams() {
+  const params = { ...queryParams.value }
+  const raw = queryParams.value.ageYear
+  const hasY = raw !== null && raw !== undefined && raw !== ''
+  if (hasY && Number.isFinite(Number(raw)) && Number(raw) >= 0) {
+    const y = Number(raw)
+    params.ageMin = y * 12
+    params.ageMax = y * 12 + 11
+  } else {
+    params.ageMin = null
+    params.ageMax = null
+  }
+  delete params.ageYear
+  return params
+}
+
 /** 查询宠物信息列表 */
 function getList() {
   loading.value = true
-  listPet(queryParams.value).then(response => {
+  listPet(buildQueryParams()).then(response => {
     petList.value = response.rows
     total.value = response.total
     loading.value = false
@@ -293,6 +346,8 @@ function reset() {
     name: null,
     breed: null,
     age: null,
+    ageYear: null,
+    ageMonth: null,
     gender: null,
     weight: null,
     status: "可领养",
@@ -340,6 +395,9 @@ function handleUpdate(row) {
   const _petId = row.petId || ids.value
   getPet(_petId).then(response => {
     form.value = response.data
+    const { years, months } = splitPetAge(form.value.age)
+    form.value.ageYear = years
+    form.value.ageMonth = months
     open.value = true
     title.value = "修改宠物信息"
   })
@@ -349,6 +407,7 @@ function handleUpdate(row) {
 function submitForm() {
   proxy.$refs["petRef"].validate(valid => {
     if (valid) {
+      form.value.age = calcPetAgeMonths(form.value.ageYear, form.value.ageMonth)
       if (form.value.petId != null) {
         updatePet(form.value).then(response => {
           proxy.$modal.msgSuccess("修改成功")
@@ -380,7 +439,7 @@ function handleDelete(row) {
 /** 导出按钮操作 */
 function handleExport() {
   proxy.download('pet/pet/export', {
-    ...queryParams.value
+    ...buildQueryParams()
   }, `pet_${new Date().getTime()}.xlsx`)
 }
 

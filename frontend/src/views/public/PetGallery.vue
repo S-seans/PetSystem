@@ -67,7 +67,7 @@
             </div>
             <div class="meta">
               <span>{{ pet.breed || '未知品种' }}</span>·
-              <span>{{ pet.age ?? '?' }}个月</span>·
+              <span>{{ formatPetAge(pet.age) }}</span>·
               <span>{{ pet.weight ?? '?' }}kg</span>
             </div>
             <p class="desc">{{ pet.description || '暂无描述' }}</p>
@@ -109,7 +109,7 @@
         <div class="detail-img">
           <el-image
             :src="currentPet.imageUrl ? (isExternal(currentPet.imageUrl) ? currentPet.imageUrl : baseApi + currentPet.imageUrl) : ''"
-            fit="cover"
+            fit="contain"
           >
             <template #error>
               <div class="detail-img-fallback">{{ petEmoji(currentPet) }}</div>
@@ -132,7 +132,7 @@
             </div>
             <div class="meta-item">
               <span class="meta-label">年龄</span>
-              <span class="meta-value">{{ currentPet.age ?? '?' }}个月</span>
+              <span class="meta-value">{{ formatPetAge(currentPet.age) }}</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">体重</span>
@@ -166,6 +166,8 @@ import { useRouter } from 'vue-router'
 import { getToken } from '@/utils/auth'
 import { isExternal } from '@/utils/validate'
 import { listPublicPets } from '@/api/public/pet'
+import { CAT_BREEDS, DOG_BREEDS, RABBIT_BREEDS, matchBreed } from '@/utils/petBreeds'
+import { formatPetAge } from '@/utils/petAge'
 import PublicHeader from '@/components/PublicHeader'
 
 const router = useRouter()
@@ -180,12 +182,16 @@ const detailVisible = ref(false)
 const currentPet = ref(null)
 const activeCat = ref('all')
 
+const isCat = p => matchBreed(p.breed, CAT_BREEDS) || /猫/.test(p.breed || '')
+const isDog = p => matchBreed(p.breed, DOG_BREEDS) || /犬|狗/.test(p.breed || '')
+const isRabbit = p => matchBreed(p.breed, RABBIT_BREEDS) || /兔/.test(p.breed || '')
+
 const categories = [
   { label: '全部', key: 'all', match: () => true },
-  { label: '🐱 猫咪', key: 'cat', match: p => /猫/.test(p.breed || '') },
-  { label: '🐶 狗狗', key: 'dog', match: p => /犬|狗/.test(p.breed || '') },
-  { label: '🐰 兔兔', key: 'rabbit', match: p => /兔/.test(p.breed || '') },
-  { label: '🐹 其他', key: 'other', match: p => !/猫|犬|狗|兔/.test(p.breed || '') }
+  { label: '🐱 猫咪', key: 'cat', match: isCat },
+  { label: '🐶 狗狗', key: 'dog', match: isDog },
+  { label: '🐰 兔兔', key: 'rabbit', match: isRabbit },
+  { label: '🐹 其他', key: 'other', match: p => !isCat(p) && !isDog(p) && !isRabbit(p) }
 ]
 
 const year = new Date().getFullYear()
@@ -210,9 +216,9 @@ function thumbStyle(pet) {
 
 function petEmoji(pet) {
   if (!pet) return '🐾'
-  if (/猫/.test(pet.breed || '')) return pet.gender === '1' ? '🐱' : '🐈'
-  if (/犬|狗/.test(pet.breed || '')) return pet.gender === '1' ? '🐕' : '🐶'
-  if (/兔/.test(pet.breed || '')) return '🐰'
+  if (matchBreed(pet.breed, CAT_BREEDS) || /猫/.test(pet.breed || '')) return pet.gender === '1' ? '🐱' : '🐈'
+  if (matchBreed(pet.breed, DOG_BREEDS) || /犬|狗/.test(pet.breed || '')) return pet.gender === '1' ? '🐕' : '🐶'
+  if (matchBreed(pet.breed, RABBIT_BREEDS) || /兔/.test(pet.breed || '')) return '🐰'
   if (/鼠|仓鼠/.test(pet.breed || '')) return '🐹'
   return '🐾'
 }

@@ -29,7 +29,7 @@
             <div class="pet-meta">
               <span class="meta-pill">🐾 {{ pet.breed || '未知品种' }}</span>
               <span class="meta-pill">{{ pet.gender === '1' ? '♂ 公' : '♀ 母' }}</span>
-              <span class="meta-pill">🎂 {{ pet.age ?? '?' }}个月</span>
+              <span class="meta-pill">🎂 {{ formatPetAge(pet.age) }}</span>
               <span class="meta-pill">⚖ {{ pet.weight ?? '?' }}kg</span>
             </div>
           </div>
@@ -76,6 +76,7 @@ import { getPublicPet } from '@/api/public/pet'
 import { addAdoption } from '@/api/adoption/adoption'
 import useUserStore from '@/store/modules/user'
 import { isExternal } from '@/utils/validate'
+import { formatPetAge } from '@/utils/petAge'
 import PublicHeader from '@/components/PublicHeader'
 
 const { proxy } = getCurrentInstance()

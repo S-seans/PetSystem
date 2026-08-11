@@ -33,6 +33,12 @@ public class Pet extends BaseEntity
     @Excel(name = "年龄", readConverterExp = "月=")
     private Long age;
 
+    /** 年龄下限（月，查询用） */
+    private Long ageMin;
+
+    /** 年龄上限（月，查询用） */
+    private Long ageMax;
+
     /** 性别 */
     @Excel(name = "性别")
     private String gender;
@@ -96,6 +102,26 @@ public class Pet extends BaseEntity
     public Long getAge() 
     {
         return age;
+    }
+
+    public void setAgeMin(Long ageMin) 
+    {
+        this.ageMin = ageMin;
+    }
+
+    public Long getAgeMin() 
+    {
+        return ageMin;
+    }
+
+    public void setAgeMax(Long ageMax) 
+    {
+        this.ageMax = ageMax;
+    }
+
+    public Long getAgeMax() 
+    {
+        return ageMax;
     }
 
     public void setGender(String gender) 

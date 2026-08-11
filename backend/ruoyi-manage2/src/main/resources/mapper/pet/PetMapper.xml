@@ -32,6 +32,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
             <if test="breed != null  and breed != ''"> and breed = #{breed}</if>
             <if test="age != null "> and age = #{age}</if>
+            <if test="ageMin != null "> and age &gt;= #{ageMin}</if>
+            <if test="ageMax != null "> and age &lt;= #{ageMax}</if>
             <if test="gender != null  and gender != ''"> and gender = #{gender}</if>
             <if test="weight != null "> and weight = #{weight}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
