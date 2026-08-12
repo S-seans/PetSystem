@@ -8,6 +8,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.sse.SseEmitterManager;
+import com.ruoyi.framework.sse.SseUnauthorizedException;
 import com.ruoyi.framework.web.service.TokenService;
 
 @RestController
@@ -34,7 +35,8 @@ public class SseController
         }
         if (loginUser == null)
         {
-            throw new RuntimeException("未登录或token无效");
+            // 返回 401 让前端 EventSource 停止无谓重连
+            throw new SseUnauthorizedException("未登录或token无效");
         }
         return sseEmitterManager.subscribe(loginUser.getUserId());
     }

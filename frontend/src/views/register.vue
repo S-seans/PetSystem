@@ -97,6 +97,9 @@
           <div class="login-link">
             <router-link class="link-type" :to="'/login'">使用已有账户登录 →</router-link>
           </div>
+          <div class="home-link">
+            <el-button class="btn-ghost btn-home" @click="goHome">🏠 回到主界面</el-button>
+          </div>
         </el-form-item>
       </el-form>
     </div>
@@ -177,6 +180,10 @@ const codeUrl = ref("")
 const loading = ref(false)
 const captchaEnabled = ref(true)
 
+function goHome() {
+  router.push('/adopt/public')
+}
+
 function handleRegister() {
   proxy.$refs.registerRef.validate(valid => {
     if (valid) {
@@ -191,7 +198,7 @@ function handleRegister() {
         }).catch(() => {})
       }).catch(() => {
         loading.value = false
-        if (captchaEnabled) {
+        if (captchaEnabled.value) {
           getCode()
         }
       })
@@ -378,6 +385,25 @@ getCode()
 }
 .link-type:hover {
   color: #e8927c;
+}
+.home-link {
+  width: 100%;
+  margin-top: 12px;
+  text-align: center;
+}
+.btn-home {
+  width: 100%;
+}
+.btn-ghost {
+  background: transparent !important;
+  border: 1.5px solid #e0d8cb !important;
+  color: #6b645b !important;
+  border-radius: 999px !important;
+  font-weight: 700;
+}
+.btn-ghost:hover {
+  border-color: #e8927c !important;
+  color: #e8927c !important;
 }
 
 .el-register-footer {

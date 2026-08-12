@@ -46,4 +46,9 @@ public class CacheConstants
      * 用户ID到token的映射 redis key
      */
     public static final String LOGIN_TOKEN_UID_KEY = "login_tokens:uid:";
+
+    /**
+     * 被强制下线（挤占）的 token 标记 redis key
+     */
+    public static final String LOGIN_TOKEN_KICKED_KEY = "login_tokens:kicked:";
 }

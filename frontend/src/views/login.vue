@@ -61,6 +61,9 @@
           <div class="register-link" v-if="register">
             <router-link class="link-type" :to="'/register'">没有账号？立即注册 →</router-link>
           </div>
+          <div class="home-link">
+            <el-button class="btn-ghost btn-home" @click="goHome">🏠 回到主界面</el-button>
+          </div>
         </el-form-item>
       </el-form>
     </div>
@@ -109,6 +112,10 @@ const redirect = ref(undefined)
 watch(route, (newRoute) => {
     redirect.value = newRoute.query && newRoute.query.redirect
 }, { immediate: true })
+
+function goHome() {
+  router.push('/adopt/public')
+}
 
 function handleLogin() {
   proxy.$refs.loginRef.validate(valid => {
@@ -319,6 +326,25 @@ getCookie()
 }
 .link-type:hover {
   color: #e8927c;
+}
+.home-link {
+  width: 100%;
+  margin-top: 12px;
+  text-align: center;
+}
+.btn-home {
+  width: 100%;
+}
+.btn-ghost {
+  background: transparent !important;
+  border: 1.5px solid #e0d8cb !important;
+  color: #6b645b !important;
+  border-radius: 999px !important;
+  font-weight: 700;
+}
+.btn-ghost:hover {
+  border-color: #e8927c !important;
+  color: #e8927c !important;
 }
 
 .el-login-footer {

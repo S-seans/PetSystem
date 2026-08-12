@@ -41,6 +41,16 @@ public class GlobalExceptionHandler
     }
 
     /**
+     * SSE 订阅认证失败异常
+     */
+    @ExceptionHandler(com.ruoyi.framework.sse.SseUnauthorizedException.class)
+    public AjaxResult handleSseUnauthorizedException(Exception e, HttpServletRequest request)
+    {
+        log.warn("SSE订阅认证失败，请求地址'{}'", request.getRequestURI());
+        return AjaxResult.error(HttpStatus.UNAUTHORIZED, e.getMessage());
+    }
+
+    /**
      * 请求方式不支持
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

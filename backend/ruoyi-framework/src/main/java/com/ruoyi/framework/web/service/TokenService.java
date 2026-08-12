@@ -105,6 +105,8 @@ public class TokenService
         {
             String userKey = getTokenKey(token);
             redisCache.deleteObject(userKey);
+            // 主动登出时清理强制下线标记，避免残留
+            redisCache.deleteObject(CacheConstants.LOGIN_TOKEN_KICKED_KEY + token);
         }
     }
 
@@ -266,9 +268,28 @@ public class TokenService
         String oldToken = redisCache.getCacheObject(userKey);
         if (StringUtils.isNotEmpty(oldToken))
         {
+            // 打上强制下线标记，使后续 401 兜底响应能区分"被挤占"与"登录过期"
+            redisCache.setCacheObject(CacheConstants.LOGIN_TOKEN_KICKED_KEY + oldToken, true, expireTime, TimeUnit.MINUTES);
             redisCache.deleteObject(getTokenKey(oldToken));
             sseEmitterManager.kickSession(userId);
         }
+    }
+
+    /**
+     * 判断请求携带的 token 是否已被强制下线（挤占）
+     *
+     * @param request 请求
+     * @return 是否被挤占
+     */
+    public boolean isKickedToken(HttpServletRequest request)
+    {
+        String token = getToken(request);
+        if (StringUtils.isNotEmpty(token))
+        {
+            Boolean kicked = redisCache.getCacheObject(CacheConstants.LOGIN_TOKEN_KICKED_KEY + token);
+            return Boolean.TRUE.equals(kicked);
+        }
+        return false;
     }
 
     public void recordTokenMapping(Long userId, String token)
