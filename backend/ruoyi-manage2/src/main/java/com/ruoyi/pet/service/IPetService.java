@@ -52,12 +52,12 @@ public interface IPetService
     public int deletePetByPetIds(Long[] petIds);
 
     /**
-     * 删除宠物信息信息
-     * 
-     * @param petId 宠物信息主键
-     * @return 结果
+     * 更新宠物状态
+     *
+     * @param petId 宠物ID
+     * @param status 目标状态
      */
-    public int deletePetByPetId(Long petId);
+    public void updatePetStatus(Long petId, String status);
 
     /**
      * 按状态统计宠物数量

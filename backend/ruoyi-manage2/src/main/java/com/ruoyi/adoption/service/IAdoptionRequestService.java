@@ -50,12 +50,4 @@ public interface IAdoptionRequestService
      * @return 结果
      */
     public int deleteAdoptionRequestByRequestIds(Long[] requestIds);
-
-    /**
-     * 删除领养申请信息
-     * 
-     * @param requestId 领养申请主键
-     * @return 结果
-     */
-    public int deleteAdoptionRequestByRequestId(Long requestId);
 }

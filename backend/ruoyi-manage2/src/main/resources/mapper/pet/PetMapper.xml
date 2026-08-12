@@ -105,10 +105,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where pet_id = #{petId}
     </update>
 
-    <delete id="deletePetByPetId" parameterType="Long">
-        delete from tb_pet where pet_id = #{petId}
-    </delete>
-
     <delete id="deletePetByPetIds" parameterType="String">
         delete from tb_pet where pet_id in 
         <foreach item="petId" collection="array" open="(" separator="," close=")">

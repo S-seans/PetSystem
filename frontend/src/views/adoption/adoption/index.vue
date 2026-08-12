@@ -136,7 +136,8 @@
           <el-select v-model="form.status" placeholder="请选择状态"  v-hasRole="['administrator']">
             <el-option label="待审核" value="pending" />
             <el-option label="通过" value="pass" />
-            <el-option label="拒绝" value="out" />
+            <el-option label="已领养" value="out" />
+            <el-option label="已拒绝" value="reject" />
           </el-select>
         </el-form-item>
         <el-form-item label="审核备注" prop="reviewRemark">
@@ -289,7 +290,8 @@ function getStatusText(status) {
   const statusMap = {
     'pending': '待审核',
     'pass': '通过',
-    'out': '拒绝'
+    'out': '已领养',
+    'reject': '已拒绝'
   }
   return statusMap[status] || status
 }
@@ -299,6 +301,8 @@ function getStatusStyle(status) {
   if (status === 'pass') {
     return { color: '#67C23A', fontWeight: 'bold' }
   } else if (status === 'out') {
+    return { color: '#409EFF', fontWeight: 'bold' }
+  } else if (status === 'reject') {
     return { color: '#F56C6C', fontWeight: 'bold' }
   }
   return {}

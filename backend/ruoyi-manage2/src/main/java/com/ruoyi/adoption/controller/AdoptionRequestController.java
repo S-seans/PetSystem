@@ -147,11 +147,6 @@ public class AdoptionRequestController extends BaseController
                 return error("无权修改此申请记录");
             }
 
-            // 检查申请状态，如果不是待审核状态，则不允许修改
-//            if (!"pending".equals(originalRequest.getStatus())) {
-//                return error("该申请已审核，无法修改");
-//            }
-
             // 普通用户不能修改状态字段
             if (adoptionRequest.getStatus() != null && !adoptionRequest.getStatus().equals(originalRequest.getStatus())) {
                 return error("无权修改申请状态");

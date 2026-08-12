@@ -3,6 +3,7 @@ package com.ruoyi.adoption.service.impl;
 import java.util.List;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.pet.domain.Pet;
@@ -50,7 +51,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         // 如果不是管理员角色，检查是否是自己申请的
         if (!SecurityUtils.hasRole("admin") && !SecurityUtils.hasRole("administrator")) {
             if (adoptionRequest != null && !currentUser.getUserId().equals(adoptionRequest.getUserId())) {
-                throw new RuntimeException("无权查看此申请记录");
+                throw new ServiceException("无权查看此申请记录");
             }
         }
 
@@ -84,13 +85,13 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         // 检查宠物是否存在
         Pet pet = petService.selectPetByPetId(petId);
         if (pet == null) {
-            throw new RuntimeException("宠物不存在，请检查宠物ID");
+            throw new ServiceException("宠物不存在，请检查宠物ID");
         }
 
         // 检查宠物是否已经被领养成功
         AdoptionSuccess successRecord = adoptionSuccessService.selectAdoptionSuccessByPetId(petId);
         if (successRecord != null && "success".equals(successRecord.getStatus())) {
-            throw new RuntimeException("该宠物已被领养成功，无法再次申请");
+            throw new ServiceException("该宠物已被领养成功，无法再次申请");
         }
 
         // 检查该宠物是否有待审核的申请
@@ -98,9 +99,9 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         if (pendingRequest != null) {
             // 如果当前用户已经有待审核的申请，允许查看但不能重复提交
             if (currentUserId.equals(pendingRequest.getUserId())) {
-                throw new RuntimeException("您已经提交过该宠物的领养申请，请等待审核结果");
+                throw new ServiceException("您已经提交过该宠物的领养申请，请等待审核结果");
             } else {
-                throw new RuntimeException("该宠物已有其他用户提交的待审核申请，请等待审核完成或选择其他宠物");
+                throw new ServiceException("该宠物已有其他用户提交的待审核申请，请等待审核完成或选择其他宠物");
             }
         }
     }
@@ -118,19 +119,14 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         // 获取当前登录用户
         SysUser currentUser = SecurityUtils.getLoginUser().getUser();
 
-        // 检查用户角色并处理userId
-        if (SecurityUtils.hasRole("user")) {
-            // 如果是user角色，强制使用当前用户的ID
-            adoptionRequest.setUserId(currentUser.getUserId());
-            adoptionRequest.setStatus("pending"); // 设置为待审核状态
-        } else if (SecurityUtils.hasRole("admin") || SecurityUtils.hasRole("administrator")) {
-            // 如果是admin或administrator角色，检查userId是否为空
+        // 管理员可代指定申请人ID；非管理员一律使用当前用户ID并置为待审核
+        if (SecurityUtils.hasRole("admin") || SecurityUtils.hasRole("administrator")) {
             if (adoptionRequest.getUserId() == null) {
-                throw new RuntimeException("管理员操作时，用户ID不能为空");
+                throw new ServiceException("管理员操作时，用户ID不能为空");
             }
         } else {
-            // 其他角色，默认使用当前用户的ID
             adoptionRequest.setUserId(currentUser.getUserId());
+            adoptionRequest.setStatus("pending");
         }
 
         // 检查宠物是否可以申请
@@ -153,7 +149,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         AdoptionRequest originalRequest = adoptionRequestMapper.selectAdoptionRequestByRequestId(adoptionRequest.getRequestId());
 
         if (originalRequest == null) {
-            throw new RuntimeException("申请记录不存在");
+            throw new ServiceException("申请记录不存在");
         }
 
         // 获取当前登录用户
@@ -163,17 +159,17 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         if (!SecurityUtils.hasRole("admin") && !SecurityUtils.hasRole("administrator")) {
             // 检查是否是申请人自己
             if (!currentUser.getUserId().equals(originalRequest.getUserId())) {
-                throw new RuntimeException("无权修改此申请记录");
+                throw new ServiceException("无权修改此申请记录");
             }
 
             // 检查申请状态，如果不是待审核状态，则不允许修改
             if (!"pending".equals(originalRequest.getStatus())) {
-                throw new RuntimeException("该申请已审核，无法修改");
+                throw new ServiceException("该申请已审核，无法修改");
             }
 
             // 普通用户只能修改自己的待审核申请，且不能修改状态
             if (adoptionRequest.getStatus() != null && !adoptionRequest.getStatus().equals(originalRequest.getStatus())) {
-                throw new RuntimeException("无权修改申请状态");
+                throw new ServiceException("无权修改申请状态");
             }
         }
 
@@ -192,33 +188,16 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         if ("pass".equals(adoptionRequest.getStatus()) && !"pass".equals(originalRequest.getStatus())) {
             createAdoptionSuccessRecord(adoptionRequest);
             // 更新宠物状态为"已领养"
-            updatePetStatus(adoptionRequest.getPetId(), "已领养");
+            petService.updatePetStatus(adoptionRequest.getPetId(), "已领养");
         }
 
         // 如果状态从pass改为其他状态，更新宠物状态为"可领养"
         if (!"pass".equals(adoptionRequest.getStatus()) && "pass".equals(originalRequest.getStatus())) {
             // 更新宠物状态为"可领养"
-            updatePetStatus(adoptionRequest.getPetId(), "可领养");
+            petService.updatePetStatus(adoptionRequest.getPetId(), "可领养");
         }
 
         return result;
-    }
-
-    /**
-     * 更新宠物状态
-     */
-    private void updatePetStatus(Long petId, String status) {
-        try {
-            Pet pet = petService.selectPetByPetId(petId);
-            if (pet != null) {
-                pet.setStatus(status);
-                petService.updatePet(pet);
-            }
-        } catch (Exception e) {
-            // 记录日志但不中断主流程
-            System.err.println("更新宠物状态失败，宠物ID: " + petId + ", 目标状态: " + status);
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -228,13 +207,13 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         // 检查宠物是否已经被领养成功
         AdoptionSuccess successRecord = adoptionSuccessService.selectAdoptionSuccessByPetId(petId);
         if (successRecord != null && "success".equals(successRecord.getStatus())) {
-            throw new RuntimeException("该宠物已被其他申请领养成功，无法再次通过");
+            throw new ServiceException("该宠物已被其他申请领养成功，无法再次通过");
         }
 
         // 检查该宠物是否有其他待审核的申请
         AdoptionRequest pendingRequest = adoptionRequestMapper.selectPendingRequestByPetIdExclude(petId, excludeRequestId);
         if (pendingRequest != null) {
-            throw new RuntimeException("该宠物已有其他待审核的申请，请先处理其他申请");
+            throw new ServiceException("该宠物已有其他待审核的申请，请先处理其他申请");
         }
     }
 
@@ -263,17 +242,5 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
     public int deleteAdoptionRequestByRequestIds(Long[] requestIds)
     {
         return adoptionRequestMapper.deleteAdoptionRequestByRequestIds(requestIds);
-    }
-
-    /**
-     * 删除领养申请信息
-     * 
-     * @param requestId 领养申请主键
-     * @return 结果
-     */
-    @Override
-    public int deleteAdoptionRequestByRequestId(Long requestId)
-    {
-        return adoptionRequestMapper.deleteAdoptionRequestByRequestId(requestId);
     }
 }

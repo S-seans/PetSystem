@@ -76,10 +76,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where success_id = #{successId}
     </update>
 
-    <delete id="deleteAdoptionSuccessBySuccessId" parameterType="Long">
-        delete from tb_adoption_success where success_id = #{successId}
-    </delete>
-
     <delete id="deleteAdoptionSuccessBySuccessIds" parameterType="String">
         delete from tb_adoption_success where success_id in 
         <foreach item="successId" collection="array" open="(" separator="," close=")">

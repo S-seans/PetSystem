@@ -44,28 +44,12 @@ public interface PetHealthMapper
     public int updatePetHealth(PetHealth petHealth);
 
     /**
-     * 删除宠物健康记录
-     * 
-     * @param healthId 宠物健康记录主键
-     * @return 结果
-     */
-    public int deletePetHealthByHealthId(Long healthId);
-
-    /**
      * 批量删除宠物健康记录
      * 
      * @param healthIds 需要删除的数据主键集合
      * @return 结果
      */
     public int deletePetHealthByHealthIds(Long[] healthIds);
-
-    /**
-     * 根据宠物ID删除健康记录
-     *
-     * @param petId 宠物ID
-     * @return 结果
-     */
-    public int deletePetHealthByPetId(Long petId);
 
     /**
      * 根据宠物ID批量删除健康记录

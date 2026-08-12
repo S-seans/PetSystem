@@ -44,14 +44,6 @@ public interface PetMapper
     public int updatePet(Pet pet);
 
     /**
-     * 删除宠物信息
-     * 
-     * @param petId 宠物信息主键
-     * @return 结果
-     */
-    public int deletePetByPetId(Long petId);
-
-    /**
      * 批量删除宠物信息
      *
      * @param petIds 需要删除的数据主键集合

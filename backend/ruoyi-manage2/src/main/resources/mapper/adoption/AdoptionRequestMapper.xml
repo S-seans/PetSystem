@@ -102,10 +102,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where request_id = #{requestId}
     </update>
 
-    <delete id="deleteAdoptionRequestByRequestId" parameterType="Long">
-        delete from tb_adoption_request where request_id = #{requestId}
-    </delete>
-
     <delete id="deleteAdoptionRequestByRequestIds" parameterType="String">
         delete from tb_adoption_request where request_id in 
         <foreach item="requestId" collection="array" open="(" separator="," close=")">

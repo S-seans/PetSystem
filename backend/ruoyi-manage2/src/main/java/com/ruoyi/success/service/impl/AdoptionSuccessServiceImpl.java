@@ -2,7 +2,6 @@ package com.ruoyi.success.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.pet.domain.Pet;
 import com.ruoyi.pet.service.IPetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -79,7 +78,7 @@ public class AdoptionSuccessServiceImpl implements IAdoptionSuccessService
 
         // 新增领养成功记录时，同步更新宠物状态为"已领养"
         if (result > 0 && adoptionSuccess.getPetId() != null) {
-            updatePetStatus(adoptionSuccess.getPetId(), "已领养");
+            petService.updatePetStatus(adoptionSuccess.getPetId(), "已领养");
         }
 
         return result;
@@ -112,31 +111,11 @@ public class AdoptionSuccessServiceImpl implements IAdoptionSuccessService
             AdoptionSuccess adoptionSuccess = adoptionSuccessMapper.selectAdoptionSuccessBySuccessId(successId);
             if (adoptionSuccess != null && adoptionSuccess.getPetId() != null) {
                 // 删除领养成功记录时，将宠物状态改回"可领养"
-                updatePetStatus(adoptionSuccess.getPetId(), "可领养");
+                petService.updatePetStatus(adoptionSuccess.getPetId(), "可领养");
             }
         }
 
         return adoptionSuccessMapper.deleteAdoptionSuccessBySuccessIds(successIds);
-    }
-
-    /**
-     * 删除领养成功记录信息
-     * 
-     * @param successId 领养成功记录主键
-     * @return 结果
-     */
-    @Override
-    @Transactional
-    public int deleteAdoptionSuccessBySuccessId(Long successId)
-    {
-        // 删除前先获取记录信息，用于更新宠物状态
-        AdoptionSuccess adoptionSuccess = adoptionSuccessMapper.selectAdoptionSuccessBySuccessId(successId);
-        if (adoptionSuccess != null && adoptionSuccess.getPetId() != null) {
-            // 删除领养成功记录时，将宠物状态改回"可领养"
-            updatePetStatus(adoptionSuccess.getPetId(), "可领养");
-        }
-
-        return adoptionSuccessMapper.deleteAdoptionSuccessBySuccessId(successId);
     }
 
     /**
@@ -146,22 +125,5 @@ public class AdoptionSuccessServiceImpl implements IAdoptionSuccessService
     public Long countAdoptionSuccess()
     {
         return adoptionSuccessMapper.countAdoptionSuccess();
-    }
-
-    /**
-     * 更新宠物状态
-     */
-    private void updatePetStatus(Long petId, String status) {
-        try {
-            Pet pet = petService.selectPetByPetId(petId);
-            if (pet != null) {
-                pet.setStatus(status);
-                petService.updatePet(pet);
-            }
-        } catch (Exception e) {
-            // 记录日志但不中断主流程
-            System.err.println("更新宠物状态失败，宠物ID: " + petId + ", 目标状态: " + status);
-            e.printStackTrace();
-        }
     }
 }

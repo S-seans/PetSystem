@@ -61,14 +61,6 @@ public interface AdoptionRequestMapper
     public int updateAdoptionRequest(AdoptionRequest adoptionRequest);
 
     /**
-     * 删除领养申请
-     * 
-     * @param requestId 领养申请主键
-     * @return 结果
-     */
-    public int deleteAdoptionRequestByRequestId(Long requestId);
-
-    /**
      * 批量删除领养申请
      * 
      * @param requestIds 需要删除的数据主键集合

@@ -1,6 +1,8 @@
 package com.ruoyi.pet.service.impl;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.health.domain.PetHealth;
 import com.ruoyi.health.service.IPetHealthService;
@@ -20,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PetServiceImpl implements IPetService 
 {
+    private static final Logger logger = LoggerFactory.getLogger(PetServiceImpl.class);
+
     @Autowired
     private PetMapper petMapper;
 
@@ -119,19 +123,27 @@ public class PetServiceImpl implements IPetService
     }
 
     /**
-     * 删除宠物信息信息
-     * 
-     * @param petId 宠物信息主键
-     * @return 结果
+     * 更新宠物状态
+     *
+     * @param petId 宠物ID
+     * @param status 目标状态
      */
     @Override
-    @Transactional
-    public int deletePetByPetId(Long petId)
+    public void updatePetStatus(Long petId, String status)
     {
-        // 先删除相关的健康记录
-        petHealthService.deletePetHealthByPetId(petId);
-        // 再删除宠物信息
-        return petMapper.deletePetByPetId(petId);
+        try
+        {
+            Pet pet = petMapper.selectPetByPetId(petId);
+            if (pet != null)
+            {
+                pet.setStatus(status);
+                petMapper.updatePet(pet);
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error("更新宠物状态失败，宠物ID: {}, 目标状态: {}", petId, status, e);
+        }
     }
 
     /**

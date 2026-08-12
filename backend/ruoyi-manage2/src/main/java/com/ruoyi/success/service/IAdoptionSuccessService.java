@@ -61,14 +61,6 @@ public interface IAdoptionSuccessService
     public int deleteAdoptionSuccessBySuccessIds(Long[] successIds);
 
     /**
-     * 删除领养成功记录信息
-     * 
-     * @param successId 领养成功记录主键
-     * @return 结果
-     */
-    public int deleteAdoptionSuccessBySuccessId(Long successId);
-
-    /**
      * 统计领养成功记录数量
      *
      * @return 数量

@@ -90,20 +90,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where health_id = #{healthId}
     </update>
 
-    <delete id="deletePetHealthByHealthId" parameterType="Long">
-        delete from tb_pet_health where health_id = #{healthId}
-    </delete>
-
     <delete id="deletePetHealthByHealthIds" parameterType="String">
         delete from tb_pet_health where health_id in 
         <foreach item="healthId" collection="array" open="(" separator="," close=")">
             #{healthId}
         </foreach>
-    </delete>
-
-    <!-- 根据宠物ID删除健康记录 -->
-    <delete id="deletePetHealthByPetId" parameterType="Long">
-        delete from tb_pet_health where pet_id = #{petId}
     </delete>
 
     <!-- 根据宠物ID批量删除健康记录 -->

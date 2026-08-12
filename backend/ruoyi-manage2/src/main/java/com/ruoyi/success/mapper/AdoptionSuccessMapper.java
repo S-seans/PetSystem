@@ -44,14 +44,6 @@ public interface AdoptionSuccessMapper
     public int updateAdoptionSuccess(AdoptionSuccess adoptionSuccess);
 
     /**
-     * 删除领养成功记录
-     * 
-     * @param successId 领养成功记录主键
-     * @return 结果
-     */
-    public int deleteAdoptionSuccessBySuccessId(Long successId);
-
-    /**
      * 批量删除领养成功记录
      *
      * @param successIds 需要删除的数据主键集合

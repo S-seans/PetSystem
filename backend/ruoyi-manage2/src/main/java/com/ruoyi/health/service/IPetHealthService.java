@@ -52,22 +52,6 @@ public interface IPetHealthService
     public int deletePetHealthByHealthIds(Long[] healthIds);
 
     /**
-     * 删除宠物健康记录信息
-     * 
-     * @param healthId 宠物健康记录主键
-     * @return 结果
-     */
-    public int deletePetHealthByHealthId(Long healthId);
-
-    /**
-     * 根据宠物ID删除健康记录
-     *
-     * @param petId 宠物ID
-     * @return 结果
-     */
-    public int deletePetHealthByPetId(Long petId);
-
-    /**
      * 根据宠物ID批量删除健康记录
      *
      * @param petIds 宠物ID数组
