@@ -20,6 +20,9 @@ server:
   servlet:
     # 应用的访问路径
     context-path: /
+    # 异步请求超时（SSE 流式回复需要，单位毫秒）
+    async:
+      timeout: 120000
   tomcat:
     # tomcat的URI编码
     uri-encoding: UTF-8
@@ -139,3 +142,18 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# AI 客服配置（DeepSeek）
+ai:
+  # 总开关
+  enabled: true
+  # 接口地址（OpenAI 兼容）
+  base-url: https://api.deepseek.com
+  # API Key，留空则 AI 功能禁用，请在此手动填入 sk-xxx
+  api-key: ""
+  # 模型名称
+  model: deepseek-chat
+  # 调用超时（秒）
+  timeout: 60
+  # 单 IP 限流（次/分钟），防止 key 被刷爆余额，0 表示不限
+  rate-limit: 10

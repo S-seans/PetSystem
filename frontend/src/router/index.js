@@ -50,22 +50,26 @@ export const constantRoutes = [
   {
     path: '/adopt/public',
     component: () => import('@/views/public/PetGallery'),
-    hidden: true
+    hidden: true,
+    meta: { chat: true }
   },
   {
     path: '/adopt/apply/:petId(\\d+)',
     component: () => import('@/views/public/PetApply'),
-    hidden: true
+    hidden: true,
+    meta: { chat: true }
   },
   {
     path: '/adopt/profile',
     component: () => import('@/views/public/UserProfile'),
-    hidden: true
+    hidden: true,
+    meta: { chat: true }
   },
   {
     path: '/adopt/my-applications',
     component: () => import('@/views/public/MyApplications'),
-    hidden: true
+    hidden: true,
+    meta: { chat: true }
   },
   {
     path: "/:pathMatch(.*)*",
