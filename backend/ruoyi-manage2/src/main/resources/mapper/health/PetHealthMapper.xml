@@ -36,14 +36,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectPetHealthList" parameterType="PetHealth" resultMap="PetHealthResult">
         <include refid="selectPetHealthVo"/>
         <where>  
-            <if test="petId != null "> and pet_id = #{petId}</if>
+            <if test="petId != null "> and h.pet_id = #{petId}</if>
             <if test="petName != null  and petName != ''"> and p.name like concat('%', #{petName}, '%')</if>
-            <if test="recordDate != null "> and record_date = #{recordDate}</if>
-            <if test="vaccineName != null  and vaccineName != ''"> and vaccine_name like concat('%', #{vaccineName}, '%')</if>
-            <if test="isSterilized != null "> and is_sterilized = #{isSterilized}</if>
-            <if test="healthStatus != null  and healthStatus != ''"> and health_status = #{healthStatus}</if>
-            <if test="description != null  and description != ''"> and description = #{description}</if>
+            <if test="recordDate != null "> and h.record_date = #{recordDate}</if>
+            <if test="vaccineName != null  and vaccineName != ''"> and h.vaccine_name like concat('%', #{vaccineName}, '%')</if>
+            <if test="isSterilized != null "> and h.is_sterilized = #{isSterilized}</if>
+            <if test="healthStatus != null  and healthStatus != ''"> and h.health_status = #{healthStatus}</if>
+            <if test="description != null  and description != ''"> and h.description like concat('%', #{description}, '%')</if>
         </where>
+        order by h.record_date desc, h.health_id desc
     </select>
     
     <select id="selectPetHealthByHealthId" parameterType="Long" resultMap="PetHealthResult">

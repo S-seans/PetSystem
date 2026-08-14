@@ -54,6 +54,18 @@ export const constantRoutes = [
     meta: { chat: true }
   },
   {
+    path: '/adopt/records',
+    component: () => import('@/views/public/AdoptionRecords'),
+    hidden: true,
+    meta: { chat: true }
+  },
+  {
+    path: '/adopt/health',
+    component: () => import('@/views/public/PetHealthRecords'),
+    hidden: true,
+    meta: { chat: true }
+  },
+  {
     path: '/adopt/apply/:petId(\\d+)',
     component: () => import('@/views/public/PetApply'),
     hidden: true,

@@ -12,7 +12,7 @@ import { connectSse, disconnect } from '@/utils/sse'
 
 NProgress.configure({ showSpinner: false })
 
-const whiteList = ['/login', '/register', '/adopt/public']
+const whiteList = ['/login', '/register', '/adopt/public', '/adopt/records', '/adopt/health']
 
 const isWhiteList = (path) => {
   return whiteList.some(pattern => isPathMatch(pattern, path))

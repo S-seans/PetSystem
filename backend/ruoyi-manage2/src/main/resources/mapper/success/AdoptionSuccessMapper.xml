@@ -42,6 +42,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="followUpDate != null "> and s.follow_up_date = #{followUpDate}</if>
             <if test="status != null  and status != ''"> and s.status = #{status}</if>
         </where>
+        order by s.adopt_time desc, s.success_id desc
     </select>
     
     <select id="selectAdoptionSuccessBySuccessId" parameterType="Long" resultMap="AdoptionSuccessResult">

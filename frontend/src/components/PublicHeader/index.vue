@@ -34,25 +34,63 @@
         </el-dropdown>
       </div>
     </nav>
+
+    <!-- 主导航栏：主页 / 领养记录 / 我的领养申请 / 宠物健康记录 -->
+    <nav class="main-nav">
+      <button
+        v-for="item in navItems"
+        :key="item.path"
+        class="nav-btn"
+        :class="{ active: isActive(item.path) }"
+        @click="go(item.path)"
+      >
+        <span class="nav-icon">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+      </button>
+    </nav>
   </header>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { ArrowDown, User, Document, SwitchButton } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/auth'
 import useUserStore from '@/store/modules/user'
 
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+/**
+ * 主导航按钮（左右次序与页面内容结构一致）：
+ * 主页 → 领养记录 → 我的领养申请 → 宠物健康记录
+ */
+const navItems = [
+  { path: '/adopt/public', label: '主页', icon: '🏠' },
+  { path: '/adopt/records', label: '领养记录', icon: '📖' },
+  { path: '/adopt/my-applications', label: '我的领养申请', icon: '📝' },
+  { path: '/adopt/health', label: '宠物健康记录', icon: '💚' }
+]
 
 const isLoggedIn = computed(() => !!getToken())
 const isAdmin = computed(() =>
   (userStore.roles || []).some(r => r === 'admin' || r === 'administrator')
 )
 const nickName = computed(() => userStore.nickName || userStore.name || '用户')
+
+/** 当前路由是否命中某导航项（申请页等详情页归属"主页"高亮） */
+function isActive(path) {
+  if (path === '/adopt/public') {
+    return route.path === path || route.path.startsWith('/adopt/apply')
+  }
+  return route.path === path
+}
+
+function go(path) {
+  router.push(path)
+}
 
 function goPublic() {
   router.push('/adopt/public')
@@ -108,7 +146,7 @@ onMounted(() => {
 .nav {
   max-width: 1160px;
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 14px 24px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -131,6 +169,46 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* 主导航栏 */
+.main-nav {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 2px 24px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #6b645b;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-btn .nav-icon {
+  font-size: 15px;
+}
+.nav-btn:hover {
+  background: #fff;
+  border-color: #e8927c;
+  color: #e8927c;
+}
+.nav-btn.active {
+  background: #2f2b26;
+  border-color: #2f2b26;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(47, 43, 38, 0.18);
 }
 
 /* 按钮 */
@@ -192,6 +270,17 @@ onMounted(() => {
 .user-arrow {
   font-size: 12px;
   color: #b0a99e;
+}
+
+/* 移动端适配 */
+@media (max-width: 640px) {
+  .main-nav {
+    justify-content: center;
+  }
+  .nav-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
 }
 </style>
 
