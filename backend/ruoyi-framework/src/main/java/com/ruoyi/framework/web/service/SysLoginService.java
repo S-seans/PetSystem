@@ -62,8 +62,9 @@ public class SysLoginService
      */
     public String login(String username, String password, String code, String uuid)
     {
-        // 验证码校验
-        validateCaptcha(username, code, uuid);
+        // 验证码校验（已临时关闭：调试阶段免验证码登录；恢复方法：
+        // 1. 取消下一行注释；2. 确保 sys_config 表 sys.account.captchaEnabled = 'true'）
+        // validateCaptcha(username, code, uuid);
         // 登录前置校验
         loginPreCheck(username, password);
         // 用户验证

@@ -103,8 +103,8 @@ const loginRules = {
 
 const codeUrl = ref("")
 const loading = ref(false)
-// 验证码开关
-const captchaEnabled = ref(true)
+// 验证码开关（已临时关闭：调试阶段免验证码登录；恢复：改回 true 并恢复 getCode() 中的覆盖逻辑）
+const captchaEnabled = ref(false)
 // 注册开关
 const register = ref(true)
 const redirect = ref(undefined)
@@ -155,7 +155,8 @@ function handleLogin() {
 
 function getCode() {
   getCodeImg().then(res => {
-    captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
+    // 临时关闭验证码：忽略后端返回的开关状态，始终不显示验证码输入框
+    captchaEnabled.value = false
     if (captchaEnabled.value) {
       codeUrl.value = "data:image/gif;base64," + res.img
       loginForm.value.uuid = res.uuid
