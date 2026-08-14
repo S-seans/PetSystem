@@ -41,12 +41,33 @@ create table tb_adoption_request (
   review_time      datetime                                   comment '审核时间',
   review_by        varchar(64)     default ''                 comment '审核人',
   create_time      datetime                                   comment '创建时间',
-  -- 生成列：status=pending 时等于 pet_id，否则为 NULL（NULL 可重复，唯一索引仅约束待审核记录）
-  pending_pet_id   bigint(20)      generated always as (case when status = 'pending' then pet_id else null end) stored comment '待审核宠物ID（生成列，防重复申请兜底）',
+  -- 兜底列：status=pending 时等于 pet_id，否则为 NULL（NULL 可重复，唯一索引仅约束待审核记录）
+  -- 由下方触发器自动维护；不用 STORED 生成列：带外键的表加生成列会触发整表重建并报 1215
+  pending_pet_id   bigint(20)      default null               comment '待审核宠物ID（防重复申请兜底，触发器维护）',
   primary key (request_id),
   -- 同一宠物同一时刻最多一条待审核申请（数据库级兜底，配合 Service 层业务校验）
   unique key uk_pending_pet (pending_pet_id)
 ) engine=innodb auto_increment=100 comment = '领养申请表';
+
+-- 触发器：插入时同步维护 pending_pet_id
+drop trigger if exists trg_adoption_request_bi;
+delimiter $$
+create trigger trg_adoption_request_bi before insert on tb_adoption_request
+for each row
+begin
+  set new.pending_pet_id = if(new.status = 'pending', new.pet_id, null);
+end$$
+delimiter ;
+
+-- 触发器：更新时同步维护 pending_pet_id（如审核通过/拒绝后释放槽位）
+drop trigger if exists trg_adoption_request_bu;
+delimiter $$
+create trigger trg_adoption_request_bu before update on tb_adoption_request
+for each row
+begin
+  set new.pending_pet_id = if(new.status = 'pending', new.pet_id, null);
+end$$
+delimiter ;
 
 -- ----------------------------
 -- 3、宠物健康记录表
