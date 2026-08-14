@@ -43,12 +43,13 @@ spring:
                 enabled: true
             statViewServlet:
                 enabled: true
-                # 设置白名单，不填则允许所有访问
+                # 设置白名单，不填则允许所有访问（生产环境建议配置内网 IP）
                 allow:
                 url-pattern: /druid/*
-                # 控制台管理用户名和密码
-                login-username: ruoyi
-                login-password: 123456
+                # 控制台管理用户名和密码（生产环境务必通过环境变量 DRUID_USER / DRUID_PASSWORD 覆盖）
+                # 注意：Druid 控制台可查看 SQL 与数据源信息，切勿使用默认弱口令
+                login-username: ${DRUID_USER:ruoyi}
+                login-password: ${DRUID_PASSWORD:RuoYi@2026#Druid!Strong}
             filter:
                 stat:
                     enabled: true

@@ -58,7 +58,7 @@
                 <div class="thumb-fallback">{{ petEmoji(pet) }}</div>
               </template>
             </el-image>
-            <span class="gender-badge">{{ pet.gender === '1' ? '♂' : '♀' }}</span>
+            <span class="gender-badge">{{ pet.gender === PET_GENDER.MALE ? '♂' : '♀' }}</span>
           </div>
           <div class="body">
             <div class="row">
@@ -119,7 +119,7 @@
         <div class="detail-info">
           <div class="detail-head">
             <h3>{{ currentPet.name }}</h3>
-            <span class="avail">● {{ currentPet.status || '可领养' }}</span>
+            <span class="avail">● {{ currentPet.status || PET_STATUS.AVAILABLE }}</span>
           </div>
           <div class="detail-meta">
             <div class="meta-item">
@@ -128,7 +128,7 @@
             </div>
             <div class="meta-item">
               <span class="meta-label">性别</span>
-              <span class="meta-value">{{ currentPet.gender === '1' ? '公' : '母' }}</span>
+              <span class="meta-value">{{ currentPet.gender === PET_GENDER.MALE ? '公' : '母' }}</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">年龄</span>
@@ -166,6 +166,7 @@ import { useRouter } from 'vue-router'
 import { getToken } from '@/utils/auth'
 import { isExternal } from '@/utils/validate'
 import { listPublicPets } from '@/api/public/pet'
+import { PET_GENDER, PET_STATUS } from '@/utils/business'
 import { CAT_BREEDS, DOG_BREEDS, RABBIT_BREEDS, matchBreed } from '@/utils/petBreeds'
 import { formatPetAge } from '@/utils/petAge'
 import PublicHeader from '@/components/PublicHeader'
@@ -216,8 +217,8 @@ function thumbStyle(pet) {
 
 function petEmoji(pet) {
   if (!pet) return '🐾'
-  if (matchBreed(pet.breed, CAT_BREEDS) || /猫/.test(pet.breed || '')) return pet.gender === '1' ? '🐱' : '🐈'
-  if (matchBreed(pet.breed, DOG_BREEDS) || /犬|狗/.test(pet.breed || '')) return pet.gender === '1' ? '🐕' : '🐶'
+  if (matchBreed(pet.breed, CAT_BREEDS) || /猫/.test(pet.breed || '')) return pet.gender === PET_GENDER.MALE ? '🐱' : '🐈'
+  if (matchBreed(pet.breed, DOG_BREEDS) || /犬|狗/.test(pet.breed || '')) return pet.gender === PET_GENDER.MALE ? '🐕' : '🐶'
   if (matchBreed(pet.breed, RABBIT_BREEDS) || /兔/.test(pet.breed || '')) return '🐰'
   if (/鼠|仓鼠/.test(pet.breed || '')) return '🐹'
   return '🐾'

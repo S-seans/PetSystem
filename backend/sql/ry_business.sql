@@ -41,7 +41,11 @@ create table tb_adoption_request (
   review_time      datetime                                   comment '审核时间',
   review_by        varchar(64)     default ''                 comment '审核人',
   create_time      datetime                                   comment '创建时间',
-  primary key (request_id)
+  -- 生成列：status=pending 时等于 pet_id，否则为 NULL（NULL 可重复，唯一索引仅约束待审核记录）
+  pending_pet_id   bigint(20)      generated always as (case when status = 'pending' then pet_id else null end) stored comment '待审核宠物ID（生成列，防重复申请兜底）',
+  primary key (request_id),
+  -- 同一宠物同一时刻最多一条待审核申请（数据库级兜底，配合 Service 层业务校验）
+  unique key uk_pending_pet (pending_pet_id)
 ) engine=innodb auto_increment=100 comment = '领养申请表';
 
 -- ----------------------------

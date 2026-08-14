@@ -166,8 +166,8 @@
         </el-form-item>
         <el-form-item label="性别" prop="gender">
           <el-select v-model="form.gender" placeholder="请选择性别">
-            <el-option label="公" value="1" />
-            <el-option label="母" value="0" />
+            <el-option label="公" :value="PET_GENDER.MALE" />
+            <el-option label="母" :value="PET_GENDER.FEMALE" />
           </el-select>
         </el-form-item>
         <el-form-item label="体重kg" prop="weight">
@@ -175,8 +175,8 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择状态":disabled="!!form.petId">
-            <el-option label="可领养" value="可领养" />
-            <el-option label="已领养" value="已领养" />
+            <el-option :label="PET_STATUS.AVAILABLE" :value="PET_STATUS.AVAILABLE" />
+            <el-option :label="PET_STATUS.ADOPTED" :value="PET_STATUS.ADOPTED" />
           </el-select>
         </el-form-item>
         <el-form-item label="照片" prop="imageUrl">
@@ -210,6 +210,7 @@
 <script setup name="Pet">
 import { listPet, getPet, delPet, addPet, updatePet } from "@/api/pet/pet"
 import { formatPetAge, calcPetAgeMonths, splitPetAge } from "@/utils/petAge"
+import { PET_STATUS, PET_GENDER, genderText } from "@/utils/business"
 
 const { proxy } = getCurrentInstance()
 
@@ -313,20 +314,14 @@ function getList() {
 
 /** 格式化性别显示 */
 function formatGender(gender) {
-  if (gender === '1') {
-    return '公'
-  } else if (gender === '0') {
-    return '母'
-  } else {
-    return '未知'
-  }
+  return genderText(gender)
 }
 
 /** 获取状态标签类型 */
 function getStatusTagType(status) {
-  if (status === '已领养') {
+  if (status === PET_STATUS.ADOPTED) {
     return 'success'
-  } else if (status === '可领养') {
+  } else if (status === PET_STATUS.AVAILABLE) {
     return 'primary'
   } else {
     return 'info'
@@ -350,7 +345,7 @@ function reset() {
     ageMonth: null,
     gender: null,
     weight: null,
-    status: "可领养",
+    status: PET_STATUS.AVAILABLE,
     imageUrl: null,
     description: null,
     rescueDate: null,

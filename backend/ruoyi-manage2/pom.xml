@@ -30,11 +30,25 @@
             <artifactId>spring-webmvc</artifactId>
         </dependency>
 
+        <!-- WebClient 响应式 HTTP 客户端（AI 客服流式调用 DeepSeek，仅作客户端使用，
+             应用仍为 Servlet 容器，不影响 Spring MVC） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.24</version> <!-- 请使用最新版本 -->
             <scope>provided</scope>
+        </dependency>
+
+        <!-- 单元测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

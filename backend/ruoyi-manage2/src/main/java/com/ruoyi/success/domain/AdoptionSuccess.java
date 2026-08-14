@@ -47,4 +47,12 @@ public class AdoptionSuccess extends BaseEntity
     /** 状态 */
     @Excel(name = "状态")
     private String status;
+
+    /** 宠物名称（关联查询，非表字段） */
+    @Excel(name = "宠物名称")
+    private String petName;
+
+    /** 领养人账号（关联查询，非表字段） */
+    @Excel(name = "领养人账号")
+    private String userName;
 }

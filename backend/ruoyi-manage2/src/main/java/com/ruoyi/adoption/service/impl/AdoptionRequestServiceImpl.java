@@ -2,16 +2,20 @@ package com.ruoyi.adoption.service.impl;
 
 import java.util.List;
 
+import com.ruoyi.adoption.constant.AdoptionStatus;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.pet.constant.PetStatus;
 import com.ruoyi.pet.domain.Pet;
 import com.ruoyi.pet.service.IPetService;
+import com.ruoyi.success.constant.SuccessStatus;
 import com.ruoyi.success.domain.AdoptionSuccess;
 import com.ruoyi.success.service.IAdoptionSuccessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.adoption.mapper.AdoptionRequestMapper;
 import com.ruoyi.adoption.domain.AdoptionRequest;
 import com.ruoyi.adoption.service.IAdoptionRequestService;
@@ -90,7 +94,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
 
         // 检查宠物是否已经被领养成功
         AdoptionSuccess successRecord = adoptionSuccessService.selectAdoptionSuccessByPetId(petId);
-        if (successRecord != null && "success".equals(successRecord.getStatus())) {
+        if (successRecord != null && SuccessStatus.SUCCESS.equals(successRecord.getStatus())) {
             throw new ServiceException("该宠物已被领养成功，无法再次申请");
         }
 
@@ -114,6 +118,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
      * @return 结果
      */
     @Override
+    @Transactional
     public int insertAdoptionRequest(AdoptionRequest adoptionRequest)
     {
         // 获取当前登录用户
@@ -126,7 +131,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
             }
         } else {
             adoptionRequest.setUserId(currentUser.getUserId());
-            adoptionRequest.setStatus("pending");
+            adoptionRequest.setStatus(AdoptionStatus.PENDING);
         }
 
         // 检查宠物是否可以申请
@@ -143,6 +148,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
      * @return 结果
      */
     @Override
+    @Transactional
     public int updateAdoptionRequest(AdoptionRequest adoptionRequest)
     {
         // 获取原始申请记录
@@ -163,7 +169,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
             }
 
             // 检查申请状态，如果不是待审核状态，则不允许修改
-            if (!"pending".equals(originalRequest.getStatus())) {
+            if (!AdoptionStatus.PENDING.equals(originalRequest.getStatus())) {
                 throw new ServiceException("该申请已审核，无法修改");
             }
 
@@ -175,9 +181,10 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
 
         // 管理员修改状态时的额外验证
         if ((SecurityUtils.hasRole("admin") || SecurityUtils.hasRole("administrator"))
+                && adoptionRequest.getStatus() != null
                 && !adoptionRequest.getStatus().equals(originalRequest.getStatus())) {
             // 状态从其他状态改为pass时，需要验证宠物是否可被领养
-            if ("pass".equals(adoptionRequest.getStatus()) && !"pass".equals(originalRequest.getStatus())) {
+            if (AdoptionStatus.PASS.equals(adoptionRequest.getStatus()) && !AdoptionStatus.PASS.equals(originalRequest.getStatus())) {
                 checkPetAvailableForAdoption(adoptionRequest.getPetId(), adoptionRequest.getRequestId());
             }
         }
@@ -185,16 +192,16 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         int result = adoptionRequestMapper.updateAdoptionRequest(adoptionRequest);
 
         // 如果状态从其他状态改为pass，创建领养成功记录并更新宠物状态
-        if ("pass".equals(adoptionRequest.getStatus()) && !"pass".equals(originalRequest.getStatus())) {
+        if (AdoptionStatus.PASS.equals(adoptionRequest.getStatus()) && !AdoptionStatus.PASS.equals(originalRequest.getStatus())) {
             createAdoptionSuccessRecord(adoptionRequest);
             // 更新宠物状态为"已领养"
-            petService.updatePetStatus(adoptionRequest.getPetId(), "已领养");
+            petService.updatePetStatus(adoptionRequest.getPetId(), PetStatus.ADOPTED);
         }
 
         // 如果状态从pass改为其他状态，更新宠物状态为"可领养"
-        if (!"pass".equals(adoptionRequest.getStatus()) && "pass".equals(originalRequest.getStatus())) {
+        if (!AdoptionStatus.PASS.equals(adoptionRequest.getStatus()) && AdoptionStatus.PASS.equals(originalRequest.getStatus())) {
             // 更新宠物状态为"可领养"
-            petService.updatePetStatus(adoptionRequest.getPetId(), "可领养");
+            petService.updatePetStatus(adoptionRequest.getPetId(), PetStatus.AVAILABLE);
         }
 
         return result;
@@ -206,7 +213,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
     private void checkPetAvailableForAdoption(Long petId, Long excludeRequestId) {
         // 检查宠物是否已经被领养成功
         AdoptionSuccess successRecord = adoptionSuccessService.selectAdoptionSuccessByPetId(petId);
-        if (successRecord != null && "success".equals(successRecord.getStatus())) {
+        if (successRecord != null && SuccessStatus.SUCCESS.equals(successRecord.getStatus())) {
             throw new ServiceException("该宠物已被其他申请领养成功，无法再次通过");
         }
 
@@ -227,7 +234,7 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
         adoptionSuccess.setPetId(adoptionRequest.getPetId());
         adoptionSuccess.setUserId(adoptionRequest.getUserId());
         adoptionSuccess.setAdoptTime(DateUtils.getNowDate()); // 领养日期设为当前时间
-        adoptionSuccess.setStatus("success"); // 成功状态
+        adoptionSuccess.setStatus(SuccessStatus.SUCCESS); // 成功状态
 
         adoptionSuccessService.insertAdoptionSuccess(adoptionSuccess);
     }
@@ -239,8 +246,22 @@ public class AdoptionRequestServiceImpl implements IAdoptionRequestService
      * @return 结果
      */
     @Override
+    @Transactional
     public int deleteAdoptionRequestByRequestIds(Long[] requestIds)
     {
+        // 获取当前登录用户
+        SysUser currentUser = SecurityUtils.getLoginUser().getUser();
+
+        // 如果不是管理员角色，只能删除自己的申请记录
+        if (!SecurityUtils.hasRole("admin") && !SecurityUtils.hasRole("administrator")) {
+            for (Long requestId : requestIds) {
+                AdoptionRequest adoptionRequest = adoptionRequestMapper.selectAdoptionRequestByRequestId(requestId);
+                if (adoptionRequest == null || !currentUser.getUserId().equals(adoptionRequest.getUserId())) {
+                    throw new ServiceException("无权删除此申请记录");
+                }
+            }
+        }
+
         return adoptionRequestMapper.deleteAdoptionRequestByRequestIds(requestIds);
     }
 }

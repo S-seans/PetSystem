@@ -3,7 +3,7 @@ package com.ruoyi.adoption.controller;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
-import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.adoption.constant.AdoptionStatus;
 import com.ruoyi.common.utils.SecurityUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +60,7 @@ public class AdoptionRequestController extends BaseController
         {
             adoptionRequest = new AdoptionRequest();
         }
+        // /my 语义固定为"我的申请"，无论角色都限定为当前登录用户
         adoptionRequest.setUserId(SecurityUtils.getLoginUser().getUserId());
         List<AdoptionRequest> list = adoptionRequestService.selectAdoptionRequestList(adoptionRequest);
         return getDataTable(list);
@@ -71,17 +72,13 @@ public class AdoptionRequestController extends BaseController
     @DeleteMapping("/my/{requestId}")
     public AjaxResult myRemove(@PathVariable("requestId") Long requestId)
     {
-        SysUser currentUser = SecurityUtils.getLoginUser().getUser();
         AdoptionRequest adoptionRequest = adoptionRequestService.selectAdoptionRequestByRequestId(requestId);
         if (adoptionRequest == null)
         {
             return error("申请记录不存在");
         }
-        if (!currentUser.getUserId().equals(adoptionRequest.getUserId()))
-        {
-            return error("无权撤销此申请记录");
-        }
-        if (!"pending".equals(adoptionRequest.getStatus()))
+        // 非管理员仅能撤销自己的申请；删除归属校验由 Service 层统一处理
+        if (!AdoptionStatus.PENDING.equals(adoptionRequest.getStatus()))
         {
             return error("该申请已审核，无法撤销");
         }
@@ -123,60 +120,24 @@ public class AdoptionRequestController extends BaseController
     }
 
     /**
-     * 修改领养申请
+     * 修改领养申请（归属/状态变更等权限校验由 Service 层统一处理）
      */
     @PreAuthorize("@ss.hasPermi('adoption:adoption:edit')")
     @Log(title = "领养申请", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody AdoptionRequest adoptionRequest)
     {
-        // 获取当前登录用户
-        SysUser currentUser = SecurityUtils.getLoginUser().getUser();
-
-        // 如果不是管理员角色，检查修改权限
-        if (!SecurityUtils.hasRole("admin") && !SecurityUtils.hasRole("administrator")) {
-            // 查询原始申请记录
-            AdoptionRequest originalRequest = adoptionRequestService.selectAdoptionRequestByRequestId(adoptionRequest.getRequestId());
-
-            if (originalRequest == null) {
-                return error("申请记录不存在");
-            }
-
-            // 检查是否是申请人自己
-            if (!currentUser.getUserId().equals(originalRequest.getUserId())) {
-                return error("无权修改此申请记录");
-            }
-
-            // 普通用户不能修改状态字段
-            if (adoptionRequest.getStatus() != null && !adoptionRequest.getStatus().equals(originalRequest.getStatus())) {
-                return error("无权修改申请状态");
-            }
-        }
-
         return toAjax(adoptionRequestService.updateAdoptionRequest(adoptionRequest));
     }
 
     /**
-     * 删除领养申请
+     * 删除领养申请（非管理员仅能删除自己的申请，由 Service 层校验）
      */
     @PreAuthorize("@ss.hasPermi('adoption:adoption:remove')")
     @Log(title = "领养申请", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{requestIds}")
     public AjaxResult remove(@PathVariable Long[] requestIds)
     {
-        // 获取当前登录用户
-        SysUser currentUser = SecurityUtils.getLoginUser().getUser();
-
-        // 如果不是管理员角色，检查删除权限
-        if (!SecurityUtils.hasRole("admin") && !SecurityUtils.hasRole("administrator")) {
-            for (Long requestId : requestIds) {
-                AdoptionRequest adoptionRequest = adoptionRequestService.selectAdoptionRequestByRequestId(requestId);
-                if (adoptionRequest == null || !currentUser.getUserId().equals(adoptionRequest.getUserId())) {
-                    return error("无权删除此申请记录");
-                }
-            }
-        }
-
         return toAjax(adoptionRequestService.deleteAdoptionRequestByRequestIds(requestIds));
     }
 }

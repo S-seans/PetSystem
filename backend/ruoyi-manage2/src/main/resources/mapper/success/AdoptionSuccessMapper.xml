@@ -14,27 +14,39 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="status"    column="status"    />
         <result property="remark"    column="remark"    />
         <result property="createTime"    column="create_time"    />
+        <result property="petName"    column="pet_name"    />
+        <result property="userName"    column="user_name"    />
     </resultMap>
 
     <sql id="selectAdoptionSuccessVo">
         select success_id, request_id, pet_id, user_id, adopt_time, follow_up_date, status, remark, create_time from tb_adoption_success
     </sql>
 
+    <sql id="selectAdoptionSuccessJoinVo">
+        select
+            s.success_id, s.request_id, s.pet_id, s.user_id, s.adopt_time, s.follow_up_date, s.status, s.remark, s.create_time,
+            p.name as pet_name,
+            u.user_name as user_name
+        from tb_adoption_success s
+        left join tb_pet p on s.pet_id = p.pet_id
+        left join sys_user u on s.user_id = u.user_id
+    </sql>
+
     <select id="selectAdoptionSuccessList" parameterType="AdoptionSuccess" resultMap="AdoptionSuccessResult">
-        <include refid="selectAdoptionSuccessVo"/>
-        <where>  
-            <if test="requestId != null "> and request_id = #{requestId}</if>
-            <if test="petId != null "> and pet_id = #{petId}</if>
-            <if test="userId != null "> and user_id = #{userId}</if>
-            <if test="adoptTime != null "> and adopt_time = #{adoptTime}</if>
-            <if test="followUpDate != null "> and follow_up_date = #{followUpDate}</if>
-            <if test="status != null  and status != ''"> and status = #{status}</if>
+        <include refid="selectAdoptionSuccessJoinVo"/>
+        <where>
+            <if test="requestId != null "> and s.request_id = #{requestId}</if>
+            <if test="petId != null "> and s.pet_id = #{petId}</if>
+            <if test="userId != null "> and s.user_id = #{userId}</if>
+            <if test="adoptTime != null "> and s.adopt_time = #{adoptTime}</if>
+            <if test="followUpDate != null "> and s.follow_up_date = #{followUpDate}</if>
+            <if test="status != null  and status != ''"> and s.status = #{status}</if>
         </where>
     </select>
     
     <select id="selectAdoptionSuccessBySuccessId" parameterType="Long" resultMap="AdoptionSuccessResult">
-        <include refid="selectAdoptionSuccessVo"/>
-        where success_id = #{successId}
+        <include refid="selectAdoptionSuccessJoinVo"/>
+        where s.success_id = #{successId}
     </select>
 
     <insert id="insertAdoptionSuccess" parameterType="AdoptionSuccess" useGeneratedKeys="true" keyProperty="successId">

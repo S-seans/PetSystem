@@ -20,6 +20,7 @@ import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.pet.constant.PetStatus;
 import com.ruoyi.pet.domain.Pet;
 import com.ruoyi.pet.service.IPetService;
 import com.ruoyi.success.service.IAdoptionSuccessService;
@@ -54,7 +55,7 @@ public class PetController extends BaseController
     public AjaxResult dashboardStats()
     {
         AjaxResult ajax = AjaxResult.success();
-        ajax.put("waiting", petService.countPetByStatus("可领养"));
+        ajax.put("waiting", petService.countPetByStatus(PetStatus.AVAILABLE));
         ajax.put("adoptedCount", adoptionSuccessService.countAdoptionSuccess());
         ajax.put("totalPets", petService.countPetByStatus(null));
         return ajax;

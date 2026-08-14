@@ -100,8 +100,9 @@ spring:
 token:
   # 令牌自定义标识
   header: Authorization
-  # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌密钥（默认值为随机生成的强密钥，生产环境务必通过环境变量 TOKEN_SECRET 覆盖）
+  # 注意：修改密钥会使已签发的 token 全部失效，需重新登录
+  secret: ${TOKEN_SECRET:c5972bc4a2a0149491f16165c93aba1793975b6ff2939d4145ea4dec27a1373b356890ea5bf95ebc7c7ed8b76f06350ccbf165d528e64d3e62e255dd9ff7c041}
   # 令牌有效期（默认30分钟）
   expireTime: 30
 

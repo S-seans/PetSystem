@@ -1,11 +1,10 @@
 package com.ruoyi.pet.service.impl;
 
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.health.domain.PetHealth;
 import com.ruoyi.health.service.IPetHealthService;
+import com.ruoyi.pet.constant.PetStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.pet.mapper.PetMapper;
@@ -22,8 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PetServiceImpl implements IPetService 
 {
-    private static final Logger logger = LoggerFactory.getLogger(PetServiceImpl.class);
-
     @Autowired
     private PetMapper petMapper;
 
@@ -67,7 +64,7 @@ public class PetServiceImpl implements IPetService
     {
         // 设置默认状态为"可领养"
         if (pet.getStatus() == null || pet.getStatus().trim().isEmpty()) {
-            pet.setStatus("可领养");
+            pet.setStatus(PetStatus.AVAILABLE);
         }
 
         pet.setCreateTime(DateUtils.getNowDate());
@@ -131,18 +128,11 @@ public class PetServiceImpl implements IPetService
     @Override
     public void updatePetStatus(Long petId, String status)
     {
-        try
+        Pet pet = petMapper.selectPetByPetId(petId);
+        if (pet != null)
         {
-            Pet pet = petMapper.selectPetByPetId(petId);
-            if (pet != null)
-            {
-                pet.setStatus(status);
-                petMapper.updatePet(pet);
-            }
-        }
-        catch (Exception e)
-        {
-            logger.error("更新宠物状态失败，宠物ID: {}, 目标状态: {}", petId, status, e);
+            pet.setStatus(status);
+            petMapper.updatePet(pet);
         }
     }
 

@@ -94,7 +94,9 @@
       <el-table-column label="记录ID" align="center" prop="successId" />
       <el-table-column label="申请ID" align="center" prop="requestId" />
       <el-table-column label="宠物ID" align="center" prop="petId" />
+      <el-table-column label="宠物名称" align="center" prop="petName" />
       <el-table-column label="领养人ID" align="center" prop="userId" />
+      <el-table-column label="领养人账号" align="center" prop="userName" />
       <el-table-column label="领养日期" align="center" prop="adoptTime" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.adoptTime, '{y}-{m}-{d}') }}</span>

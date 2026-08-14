@@ -10,6 +10,7 @@ import com.ruoyi.common.annotation.Anonymous;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.pet.constant.PetStatus;
 import com.ruoyi.pet.domain.Pet;
 import com.ruoyi.pet.service.IPetService;
 
@@ -29,7 +30,7 @@ public class PublicPetController extends BaseController
         {
             pet = new Pet();
         }
-        pet.setStatus("可领养");
+        pet.setStatus(PetStatus.AVAILABLE);
         List<Pet> list = petService.selectPublicPetList(pet);
         return getDataTable(list);
     }

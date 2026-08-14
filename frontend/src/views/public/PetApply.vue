@@ -28,7 +28,7 @@
             </div>
             <div class="pet-meta">
               <span class="meta-pill">🐾 {{ pet.breed || '未知品种' }}</span>
-              <span class="meta-pill">{{ pet.gender === '1' ? '♂ 公' : '♀ 母' }}</span>
+              <span class="meta-pill">{{ pet.gender === PET_GENDER.MALE ? '♂ 公' : '♀ 母' }}</span>
               <span class="meta-pill">🎂 {{ formatPetAge(pet.age) }}</span>
               <span class="meta-pill">⚖ {{ pet.weight ?? '?' }}kg</span>
             </div>
@@ -74,6 +74,7 @@ import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPublicPet } from '@/api/public/pet'
 import { addAdoption } from '@/api/adoption/adoption'
+import { ADOPTION_STATUS, PET_GENDER } from '@/utils/business'
 import useUserStore from '@/store/modules/user'
 import { isExternal } from '@/utils/validate'
 import { formatPetAge } from '@/utils/petAge'
@@ -115,8 +116,8 @@ function thumbStyle(p) {
 
 function petEmoji(p) {
   if (!p) return '🐾'
-  if (/猫/.test(p.breed || '')) return p.gender === '1' ? '🐱' : '🐈'
-  if (/犬|狗/.test(p.breed || '')) return p.gender === '1' ? '🐕' : '🐶'
+  if (/猫/.test(p.breed || '')) return p.gender === PET_GENDER.MALE ? '🐱' : '🐈'
+  if (/犬|狗/.test(p.breed || '')) return p.gender === PET_GENDER.MALE ? '🐕' : '🐶'
   if (/兔/.test(p.breed || '')) return '🐰'
   if (/鼠|仓鼠/.test(p.breed || '')) return '🐹'
   return '🐾'
@@ -134,7 +135,7 @@ function submitForm() {
       petId: parseInt(route.params.petId),
       userId: userStore.id,
       reason: form.reason,
-      status: 'pending'
+      status: ADOPTION_STATUS.PENDING
     }).then(() => {
       proxy.$modal.msgSuccess('领养申请提交成功！请等待管理员审核。')
       router.push('/adopt/public')

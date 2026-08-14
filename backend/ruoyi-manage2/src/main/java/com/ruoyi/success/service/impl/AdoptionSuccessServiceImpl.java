@@ -2,6 +2,7 @@ package com.ruoyi.success.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.pet.constant.PetStatus;
 import com.ruoyi.pet.service.IPetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -78,7 +79,7 @@ public class AdoptionSuccessServiceImpl implements IAdoptionSuccessService
 
         // 新增领养成功记录时，同步更新宠物状态为"已领养"
         if (result > 0 && adoptionSuccess.getPetId() != null) {
-            petService.updatePetStatus(adoptionSuccess.getPetId(), "已领养");
+            petService.updatePetStatus(adoptionSuccess.getPetId(), PetStatus.ADOPTED);
         }
 
         return result;
@@ -111,7 +112,7 @@ public class AdoptionSuccessServiceImpl implements IAdoptionSuccessService
             AdoptionSuccess adoptionSuccess = adoptionSuccessMapper.selectAdoptionSuccessBySuccessId(successId);
             if (adoptionSuccess != null && adoptionSuccess.getPetId() != null) {
                 // 删除领养成功记录时，将宠物状态改回"可领养"
-                petService.updatePetStatus(adoptionSuccess.getPetId(), "可领养");
+                petService.updatePetStatus(adoptionSuccess.getPetId(), PetStatus.AVAILABLE);
             }
         }
 

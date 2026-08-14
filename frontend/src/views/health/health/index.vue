@@ -162,6 +162,7 @@
 
 <script setup name="Health">
 import { listHealth, getHealth, delHealth, addHealth, updateHealth } from "@/api/health/health"
+import { healthStatusText } from "@/utils/business"
 
 const { proxy } = getCurrentInstance()
 
@@ -309,14 +310,7 @@ function handleExport() {
 
 /** 健康状态映射 */
 function getHealthStatusText(status) {
-  const statusMap = {
-    'HEALTHY': '健康',
-    'SICK': '生病',
-    'RECOVERING': '康复中',
-    'GOOD': '良好',
-    'DEAD': '死亡',
-  }
-  return statusMap[status] || status || '未知'
+  return healthStatusText(status)
 }
 
 getList()

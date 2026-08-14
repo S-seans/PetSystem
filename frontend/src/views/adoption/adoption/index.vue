@@ -134,10 +134,10 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择状态"  v-hasRole="['administrator']">
-            <el-option label="待审核" value="pending" />
-            <el-option label="通过" value="pass" />
-            <el-option label="已领养" value="out" />
-            <el-option label="已拒绝" value="reject" />
+            <el-option label="待审核" :value="ADOPTION_STATUS.PENDING" />
+            <el-option label="通过" :value="ADOPTION_STATUS.PASS" />
+            <el-option label="已领养" :value="ADOPTION_STATUS.OUT" />
+            <el-option label="已拒绝" :value="ADOPTION_STATUS.REJECT" />
           </el-select>
         </el-form-item>
         <el-form-item label="审核备注" prop="reviewRemark">
@@ -169,6 +169,7 @@
 import { listAdoption, getAdoption, delAdoption, addAdoption, updateAdoption } from "@/api/adoption/adoption"
 import { getPet } from "@/api/pet/pet"
 import { parseTime} from "@/utils/ruoyi.js";
+import { ADOPTION_STATUS, adoptionStatusText } from "@/utils/business";
 import useUserStore from "@/store/modules/user.js";
 
 const userStore = useUserStore()
@@ -287,22 +288,16 @@ async function getPetName(petId) {
 
 /** 获取状态显示文本 */
 function getStatusText(status) {
-  const statusMap = {
-    'pending': '待审核',
-    'pass': '通过',
-    'out': '已领养',
-    'reject': '已拒绝'
-  }
-  return statusMap[status] || status
+  return adoptionStatusText(status)
 }
 
 /** 获取状态显示样式 */
 function getStatusStyle(status) {
-  if (status === 'pass') {
+  if (status === ADOPTION_STATUS.PASS) {
     return { color: '#67C23A', fontWeight: 'bold' }
-  } else if (status === 'out') {
+  } else if (status === ADOPTION_STATUS.OUT) {
     return { color: '#409EFF', fontWeight: 'bold' }
-  } else if (status === 'reject') {
+  } else if (status === ADOPTION_STATUS.REJECT) {
     return { color: '#F56C6C', fontWeight: 'bold' }
   }
   return {}
@@ -312,14 +307,14 @@ function getStatusStyle(status) {
 function canEdit(row) {
   // 管理员可以编辑所有，普通用户只能编辑自己的且状态为待审核的申请
   if (isAdmin.value) return true
-  return row.status === 'pending'
+  return row.status === ADOPTION_STATUS.PENDING
 }
 
 /** 检查是否可以删除 */
 function canDelete(row) {
   // 管理员可以删除所有，普通用户只能删除自己的且状态为待审核的申请
   if (isAdmin.value) return true
-  return row.status === 'pending'
+  return row.status === ADOPTION_STATUS.PENDING
 }
 
 // 取消按钮
@@ -370,7 +365,7 @@ function handleAdd() {
   open.value = true
   title.value = "添加领养申请"
   if (!isAdmin.value) {
-    form.value.status = "pending"
+    form.value.status = ADOPTION_STATUS.PENDING
   }
 }
 

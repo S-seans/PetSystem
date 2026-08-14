@@ -56,7 +56,8 @@ public class AiChatController extends BaseController
         }
 
         List<AiChatMessage> history = request.getHistory();
-        new Thread(() -> aiChatService.streamChat(message, history, emitter), "ai-chat-stream").start();
+        // WebClient 流式调用为异步非阻塞，无需手工创建线程
+        aiChatService.streamChat(message, history, emitter);
         return emitter;
     }
 

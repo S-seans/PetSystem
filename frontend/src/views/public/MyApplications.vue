@@ -36,7 +36,7 @@
           </div>
 
           <div class="app-foot">
-            <el-button v-if="item.status === 'pending'" class="btn-ghost btn-withdraw" :loading="withdrawingId === item.requestId" @click="withdraw(item)">撤销申请</el-button>
+            <el-button v-if="item.status === ADOPTION_STATUS.PENDING" class="btn-ghost btn-withdraw" :loading="withdrawingId === item.requestId" @click="withdraw(item)">撤销申请</el-button>
             <span v-else class="locked-tip">{{ statusTip(item.status) }}</span>
           </div>
         </div>
@@ -65,6 +65,7 @@
 <script setup>
 import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
 import { listMyAdoption, delMyAdoption } from '@/api/adoption/adoption'
+import { ADOPTION_STATUS, adoptionStatusText } from '@/utils/business'
 import PublicHeader from '@/components/PublicHeader'
 
 const { proxy } = getCurrentInstance()
@@ -81,19 +82,13 @@ const queryParams = reactive({
 })
 
 function statusText(status) {
-  const map = {
-    pending: '待审核',
-    pass: '已通过',
-    out: '已领养',
-    reject: '已拒绝'
-  }
-  return map[status] || status || '未知'
+  return adoptionStatusText(status)
 }
 
 function statusTip(status) {
-  if (status === 'pass') return '申请已通过，等待办理领养手续'
-  if (status === 'out') return '宠物已被领养，感谢你的爱心'
-  if (status === 'reject') return '申请未通过，可联系救助站了解原因'
+  if (status === ADOPTION_STATUS.PASS) return '申请已通过，等待办理领养手续'
+  if (status === ADOPTION_STATUS.OUT) return '宠物已被领养，感谢你的爱心'
+  if (status === ADOPTION_STATUS.REJECT) return '申请未通过，可联系救助站了解原因'
   return ''
 }
 

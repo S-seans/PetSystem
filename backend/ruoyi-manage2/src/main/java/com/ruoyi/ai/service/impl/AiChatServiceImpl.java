@@ -1,17 +1,11 @@
 package com.ruoyi.ai.service.impl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
@@ -19,28 +13,44 @@ import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.ai.config.AiConfig;
 import com.ruoyi.ai.domain.AiChatMessage;
 import com.ruoyi.ai.service.AiChatService;
+import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.pet.constant.PetGender;
 import com.ruoyi.pet.domain.Pet;
 import com.ruoyi.pet.service.IPetService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
 
 /**
  * AI 对话服务实现
  * 
  * 流程：组装 System Prompt（系统功能 + 领养规则）→ 宠物数据动态检索拼入上下文 →
  * 调用 DeepSeek（OpenAI 兼容 /chat/completions，stream=true）→ 逐 token 转发给前端。
+ * 
+ * 说明：使用 WebClient（Reactive）流式消费 SSE，避免手工线程与阻塞 IO；
+ * 限流优先使用 Redis（多实例共享），Redis 不可用时自动回退到本地内存限流。
  */
 @Service
 public class AiChatServiceImpl implements AiChatService
 {
     private static final Logger logger = LoggerFactory.getLogger(AiChatServiceImpl.class);
 
-    /** 单 IP 限流缓存：ip -> 请求时间戳列表 */
+    /** 本地限流缓存：ip -> 请求时间戳列表（仅作为 Redis 不可用时的兜底） */
     private static final Map<String, List<Long>> RATE_CACHE = new ConcurrentHashMap<>();
+
+    /** Redis 限流键前缀 */
+    private static final String RATE_KEY_PREFIX = "ai:rate:";
 
     /** 宠物相关关键词，命中则触发宠物数据检索 */
     private static final String[] PET_KEYWORDS = { "宠物", "猫", "狗", "兔", "鼠", "仓鼠", "领养", "毛孩子", "汪", "喵" };
@@ -64,6 +74,12 @@ public class AiChatServiceImpl implements AiChatService
 
     @Autowired
     private IPetService petService;
+
+    @Autowired
+    private RedisCache redisCache;
+
+    /** WebClient 实例（懒初始化，线程安全） */
+    private volatile WebClient webClient;
 
     /**
      * 系统功能说明（静态 Prompt）
@@ -121,7 +137,7 @@ public class AiChatServiceImpl implements AiChatService
     }
 
     /**
-     * 校验并消费限流配额
+     * 校验并消费限流配额（优先 Redis，失败回退本地内存）
      *
      * @param ip 客户端 IP
      * @return 是否允许继续
@@ -133,6 +149,37 @@ public class AiChatServiceImpl implements AiChatService
         {
             return true;
         }
+        try
+        {
+            return tryAcquireRedis(ip, limit);
+        }
+        catch (Exception e)
+        {
+            logger.warn("Redis 限流不可用，回退到本地内存限流：{}", e.getMessage());
+            return tryAcquireLocal(ip, limit);
+        }
+    }
+
+    /**
+     * Redis 计数限流（INCR + 过期窗口），多实例共享
+     */
+    private boolean tryAcquireRedis(String ip, int limit)
+    {
+        String key = RATE_KEY_PREFIX + ip;
+        Long count = redisCache.redisTemplate.opsForValue().increment(key, 1L);
+        if (count != null && count == 1L)
+        {
+            // 首次计数时设置过期时间（秒）
+            redisCache.expire(key, RATE_WINDOW_MS / 1000);
+        }
+        return count == null || count <= limit;
+    }
+
+    /**
+     * 本地内存滑动窗口限流（Redis 不可用时的兜底）
+     */
+    private boolean tryAcquireLocal(String ip, int limit)
+    {
         long now = System.currentTimeMillis();
         synchronized (RATE_CACHE)
         {
@@ -232,7 +279,7 @@ public class AiChatServiceImpl implements AiChatService
             }
             sb.append("\n- ").append(p.getName());
             sb.append("，品种：").append(StringUtils.defaultIfEmpty(p.getBreed(), "未知"));
-            sb.append("，性别：").append("1".equals(p.getGender()) ? "公" : "母");
+            sb.append("，性别：").append(PetGender.MALE.equals(p.getGender()) ? "公" : "母");
             sb.append("，年龄：").append(formatPetAge(p.getAge()));
             sb.append("，体重：").append(p.getWeight() == null ? "?" : p.getWeight()).append("kg");
             sb.append("，状态：").append(StringUtils.defaultIfEmpty(p.getStatus(), "未知"));
@@ -284,9 +331,32 @@ public class AiChatServiceImpl implements AiChatService
     }
 
     /**
-     * 调用 DeepSeek 流式接口并逐 token 转发
+     * 懒初始化 WebClient
+     * 说明：不设置 responseTimeout（Spring 5.3 不支持且会掐断长 SSE 流），
+     * 整体超时由 SseEmitter 的 120s 超时 + onTimeout 取消订阅兜底。
      */
-    private void callDeepSeekStream(List<AiChatMessage> messages, SseEmitter emitter) throws IOException
+    private WebClient getWebClient()
+    {
+        WebClient client = this.webClient;
+        if (client == null)
+        {
+            synchronized (this)
+            {
+                client = this.webClient;
+                if (client == null)
+                {
+                    client = WebClient.builder().build();
+                    this.webClient = client;
+                }
+            }
+        }
+        return client;
+    }
+
+    /**
+     * 调用 DeepSeek 流式接口并逐 token 转发（Reactive，无手工线程）
+     */
+    private void callDeepSeekStream(List<AiChatMessage> messages, SseEmitter emitter)
     {
         String baseUrl = aiConfig.getBaseUrl();
         if (!baseUrl.endsWith("/"))
@@ -309,107 +379,99 @@ public class AiChatServiceImpl implements AiChatService
         }
         body.put("messages", messageArr);
 
-        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        Flux<ServerSentEvent<String>> stream = getWebClient().post()
+                .uri(urlStr)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + aiConfig.getApiKey())
+                .header(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM_VALUE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body.toJSONString())
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>()
+                {
+                });
+
+        // 持有订阅句柄，便于客户端断开/超时/出错时取消上游请求
+        AtomicReference<Disposable> disposableRef = new AtomicReference<>();
+        Disposable disposable = stream.subscribe(
+                event -> handleSseEvent(event, emitter),
+                error -> {
+                    logger.error("DeepSeek 流式调用失败：{}", error.getMessage());
+                    sendEvent(emitter, "error", "模型服务调用失败，请稍后再试");
+                    emitter.complete();
+                },
+                () -> {
+                    sendEvent(emitter, "done", null);
+                    emitter.complete();
+                });
+        disposableRef.set(disposable);
+
+        // 客户端断开 / 超时 / 异常时取消上游订阅，避免资源泄漏
+        emitter.onCompletion(() -> disposeQuietly(disposableRef));
+        emitter.onTimeout(() -> disposeQuietly(disposableRef));
+        emitter.onError(t -> {
+            logger.warn("SSE 连接异常：{}", t.getMessage());
+            disposeQuietly(disposableRef);
+        });
+    }
+
+    private void disposeQuietly(AtomicReference<Disposable> disposableRef)
+    {
+        Disposable disposable = disposableRef.get();
+        if (disposable != null && !disposable.isDisposed())
+        {
+            disposable.dispose();
+        }
+    }
+
+    /**
+     * 处理一条 DeepSeek SSE 事件（data: {...} 或 data: [DONE]）
+     */
+    private void handleSseEvent(ServerSentEvent<String> event, SseEmitter emitter)
+    {
+        String payload = event == null ? null : event.data();
+        if (StringUtils.isBlank(payload))
+        {
+            return;
+        }
+        String data = payload.trim();
+        if ("[DONE]".equals(data))
+        {
+            return;
+        }
         try
         {
-            conn.setRequestMethod("POST");
-            conn.setConnectTimeout(aiConfig.getTimeout() * 1000);
-            conn.setReadTimeout(aiConfig.getTimeout() * 1000);
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("Authorization", "Bearer " + aiConfig.getApiKey());
-            conn.setRequestProperty("Accept", "text/event-stream");
-            conn.setDoOutput(true);
-
-            try (OutputStream os = conn.getOutputStream())
+            JSONObject obj = JSON.parseObject(data);
+            if (obj == null || obj.get("error") != null)
             {
-                os.write(body.toJSONString().getBytes(StandardCharsets.UTF_8));
-            }
-
-            int code = conn.getResponseCode();
-            if (code != 200)
-            {
-                String err = readStream(conn.getErrorStream());
-                logger.error("DeepSeek 返回错误：code={}, body={}", code, err);
+                logger.warn("DeepSeek 流式数据异常：{}", data);
                 sendEvent(emitter, "error", "模型服务调用失败，请稍后再试");
                 emitter.complete();
                 return;
             }
-
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)))
+            JSONArray choices = obj.getJSONArray("choices");
+            if (choices == null || choices.isEmpty())
             {
-                String line;
-                while ((line = reader.readLine()) != null)
-                {
-                    if (StringUtils.isBlank(line) || !line.startsWith("data:"))
-                    {
-                        continue;
-                    }
-                    String payload = line.substring(5).trim();
-                    if ("[DONE]".equals(payload))
-                    {
-                        break;
-                    }
-                    JSONObject obj = JSON.parseObject(payload);
-                    if (obj == null || obj.get("error") != null)
-                    {
-                        logger.warn("DeepSeek 流式数据异常：{}", payload);
-                        break;
-                    }
-                    JSONArray choices = obj.getJSONArray("choices");
-                    if (choices == null || choices.isEmpty())
-                    {
-                        continue;
-                    }
-                    JSONObject delta = choices.getJSONObject(0).getJSONObject("delta");
-                    if (delta == null)
-                    {
-                        continue;
-                    }
-                    String content = delta.getString("content");
-                    if (StringUtils.isEmpty(content))
-                    {
-                        continue;
-                    }
-                    if (!sendEvent(emitter, "content", content))
-                    {
-                        logger.warn("客户端已断开连接");
-                        break;
-                    }
-                }
+                return;
+            }
+            JSONObject delta = choices.getJSONObject(0).getJSONObject("delta");
+            if (delta == null)
+            {
+                return;
+            }
+            String content = delta.getString("content");
+            if (StringUtils.isEmpty(content))
+            {
+                return;
+            }
+            if (!sendEvent(emitter, "content", content))
+            {
+                logger.warn("客户端已断开连接");
             }
         }
-        finally
+        catch (Exception e)
         {
-            conn.disconnect();
+            logger.warn("DeepSeek 流式数据解析失败：{}", e.getMessage());
         }
-        sendEvent(emitter, "done", null);
-        emitter.complete();
-    }
-
-    /**
-     * 读取错误响应流内容
-     */
-    private String readStream(java.io.InputStream input)
-    {
-        if (input == null)
-        {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8)))
-        {
-            String line;
-            while ((line = reader.readLine()) != null)
-            {
-                sb.append(line);
-            }
-        }
-        catch (IOException e)
-        {
-            logger.warn("读取错误响应失败：{}", e.getMessage());
-        }
-        return sb.toString();
     }
 
     /**
