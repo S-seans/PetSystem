@@ -1,6 +1,7 @@
 package com.ruoyi.adoption.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.adoption.domain.AdoptionRequest;
 
 /**
@@ -42,7 +43,7 @@ public interface AdoptionRequestMapper
      * @param excludeRequestId 排除的申请ID
      * @return 领养申请
      */
-    public AdoptionRequest selectPendingRequestByPetIdExclude(Long petId, Long excludeRequestId);
+    public AdoptionRequest selectPendingRequestByPetIdExclude(@Param("petId") Long petId, @Param("excludeRequestId") Long excludeRequestId);
 
     /**
      * 新增领养申请
