@@ -17,6 +17,17 @@
             @keyup.enter="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="状态" prop="status">
+        <el-select
+            v-model="queryParams.status"
+            placeholder="全部状态"
+            clearable
+            style="width: 140px"
+            @change="handleStatusChange"
+        >
+          <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="审核时间" prop="reviewTime">
         <el-date-picker clearable
                         v-model="queryParams.reviewTime"
@@ -81,6 +92,16 @@
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
+    <div class="status-tabs">
+      <span
+          v-for="item in statusTabs"
+          :key="String(item.value)"
+          class="status-tab"
+          :class="{ active: queryParams.status === item.value }"
+          @click="handleStatusTab(item.value)"
+      >{{ item.label }}</span>
+    </div>
+
     <el-table v-loading="loading" :data="adoptionList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="申请ID" align="center" prop="requestId" />
@@ -100,8 +121,10 @@
         </template>
       </el-table-column>
       <el-table-column label="审核人" align="center" prop="reviewBy" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="240">
         <template #default="scope">
+          <el-button v-if="scope.row.status === ADOPTION_STATUS.PENDING" link type="success" @click="handleReview(scope.row, ADOPTION_STATUS.PASS)" v-hasPermi="['adoption:adoption:edit']">通过</el-button>
+          <el-button v-if="scope.row.status === ADOPTION_STATUS.PENDING" link type="danger" @click="handleReview(scope.row, ADOPTION_STATUS.REJECT)" v-hasPermi="['adoption:adoption:edit']">拒绝</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['adoption:adoption:edit']">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['adoption:adoption:remove']">删除</el-button>
         </template>
@@ -169,7 +192,7 @@
 import { listAdoption, getAdoption, delAdoption, addAdoption, updateAdoption } from "@/api/adoption/adoption"
 import { getPet } from "@/api/pet/pet"
 import { parseTime} from "@/utils/ruoyi.js";
-import { ADOPTION_STATUS, adoptionStatusText } from "@/utils/business";
+import { ADOPTION_STATUS, ADOPTION_STATUS_TEXT, adoptionStatusText } from "@/utils/business";
 import useUserStore from "@/store/modules/user.js";
 
 const userStore = useUserStore()
@@ -188,6 +211,20 @@ const title = ref("")
 const isAdmin = ref(false) // 是否是管理员
 const petCheckResult = ref(null)
 
+// 状态下拉选项
+const statusOptions = [
+  { label: ADOPTION_STATUS_TEXT[ADOPTION_STATUS.PENDING], value: ADOPTION_STATUS.PENDING },
+  { label: ADOPTION_STATUS_TEXT[ADOPTION_STATUS.PASS], value: ADOPTION_STATUS.PASS },
+  { label: ADOPTION_STATUS_TEXT[ADOPTION_STATUS.OUT], value: ADOPTION_STATUS.OUT },
+  { label: ADOPTION_STATUS_TEXT[ADOPTION_STATUS.REJECT], value: ADOPTION_STATUS.REJECT }
+]
+
+// 快速过滤标签
+const statusTabs = [
+  { label: '全部', value: '' },
+  ...statusOptions
+]
+
 const data = reactive({
   form: {},
   queryParams: {
@@ -196,7 +233,7 @@ const data = reactive({
     petId: null,
     userId: null,
     reason: null,
-    status: null,
+    status: '',
     reviewRemark: null,
     reviewTime: null,
     reviewBy: null,
@@ -349,7 +386,44 @@ function handleQuery() {
 /** 重置按钮操作 */
 function resetQuery() {
   proxy.resetForm("queryRef")
+  queryParams.value.status = ''
   handleQuery()
+}
+
+/** 快速状态标签点击 */
+function handleStatusTab(status) {
+  if (queryParams.value.status === status) {
+    return
+  }
+  queryParams.value.status = status
+  handleStatusChange()
+}
+
+/** 状态下拉/标签变化：回到第一页并刷新 */
+function handleStatusChange() {
+  queryParams.value.pageNum = 1
+  getList()
+}
+
+/** 行内快捷审核：通过 / 拒绝（状态变更与宠物/成功记录联动由后端处理） */
+function handleReview(row, targetStatus) {
+  const isPass = targetStatus === ADOPTION_STATUS.PASS
+  const petDesc = row.petName || ('宠物ID：' + row.petId)
+  const tip = isPass
+    ? '确定通过该领养申请？通过后将自动生成领养成功记录，并将宠物「' + petDesc + '」置为已领养。'
+    : '确定拒绝该领养申请？'
+  proxy.$modal.confirm(tip).then(() => {
+    const payload = { ...row }
+    payload.status = targetStatus
+    payload.reviewTime = proxy.parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}')
+    payload.reviewBy = userStore.name || userStore.nickName || '管理员'
+    updateAdoption(payload).then(() => {
+      proxy.$modal.msgSuccess(isPass ? '已通过该领养申请' : '已拒绝该领养申请')
+      getList()
+    }).catch(error => {
+      proxy.$modal.msgError(error.message || '操作失败')
+    })
+  }).catch(() => {})
 }
 
 // 多选框选中数据
@@ -464,6 +538,36 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.status-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.status-tab {
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+  background: #f4f4f5;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+
+.status-tab:hover {
+  color: #409eff;
+  background: #ecf5ff;
+}
+
+.status-tab.active {
+  color: #fff;
+  background: #409eff;
+}
+
 .pet-check-result {
   margin-top: 5px;
   font-size: 12px;

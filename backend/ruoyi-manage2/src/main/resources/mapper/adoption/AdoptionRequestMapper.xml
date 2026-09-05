@@ -37,6 +37,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="reviewTime != null "> and date(ar.review_time) = date(#{reviewTime})</if>
             <if test="reviewBy != null  and reviewBy != ''"> and ar.review_by like concat('%', #{reviewBy}, '%')</if>
         </where>
+        order by (ar.status = 'pending') desc, ar.create_time desc, ar.request_id desc
     </select>
 
     <select id="selectAdoptionRequestByRequestId" parameterType="Long" resultMap="AdoptionRequestResult">
