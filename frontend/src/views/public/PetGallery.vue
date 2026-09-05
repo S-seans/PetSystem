@@ -161,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { getToken } from '@/utils/auth'
 import { isExternal } from '@/utils/validate'
@@ -173,6 +173,10 @@ import PublicHeader from '@/components/PublicHeader'
 
 const router = useRouter()
 const baseApi = import.meta.env.VITE_APP_BASE_API
+
+// 页面卸载时取消在途请求，避免快速切页堆积“孤儿请求”
+const abortCtrl = new AbortController()
+onBeforeUnmount(() => abortCtrl.abort())
 
 const pets = ref([])
 const total = ref(0)
@@ -253,9 +257,13 @@ function scrollToPets() {
 
 function getList() {
   loading.value = true
-  listPublicPets({ pageNum: pageNum.value, pageSize }).then(res => {
+  listPublicPets({ pageNum: pageNum.value, pageSize }, { signal: abortCtrl.signal }).then(res => {
     pets.value = res.rows || []
     total.value = res.total || 0
+  }).catch(err => {
+    if (err && (err.code === 'ERR_CANCELED' || err.name === 'CanceledError')) return
+    pets.value = []
+    total.value = 0
   }).finally(() => {
     loading.value = false
   })

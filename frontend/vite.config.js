@@ -28,7 +28,8 @@ export default defineConfig(({ mode, command }) => {
     // 打包配置
     build: {
       // https://vite.dev/config/build-options.html
-      sourcemap: command === 'build' ? false : 'inline',
+      // 关闭 sourcemap，降低 dev 冷编译与产物体积
+      sourcemap: false,
       outDir: 'dist',
       assetsDir: 'assets',
       chunkSizeWarningLimit: 2000,
@@ -47,17 +48,32 @@ export default defineConfig(({ mode, command }) => {
       open: true,
       proxy: {
         // https://cn.vitejs.dev/config/#server-proxy
-        '/dev-api': {
-          target: baseUrl,
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/dev-api/, '')
-        },
+        // 常规接口与 SSE(/sse/subscribe)、AI 流式(/ai/chat/stream) 全部经 /dev-api 同源转发，
+        // 避免浏览器对后端端口维护长连接/跨源连接限制导致的接口超时
+         '/dev-api': {
+           target: baseUrl,
+           changeOrigin: true,
+           rewrite: (p) => p.replace(/^\/dev-api/, '')
+         },
+         // 后端静态资源（图片/上传资源），仅静态不参与接口超时
+         '/images': {
+           target: baseUrl,
+           changeOrigin: true,
+         },
+         '/profile': {
+           target: baseUrl,
+           changeOrigin: true,
+         },
          // springdoc proxy
          '^/v3/api-docs/(.*)': {
-          target: baseUrl,
-          changeOrigin: true,
-        }
+           target: baseUrl,
+           changeOrigin: true,
+         }
       }
+    },
+    // 预打包重依赖，避免首次进入含 echarts/富文本等页面时冷编译阻塞 Node（曾导致整体接口超时）
+    optimizeDeps: {
+      include: ['echarts', 'element-plus', '@vueup/vue-quill']
     },
     css: {
       postcss: {

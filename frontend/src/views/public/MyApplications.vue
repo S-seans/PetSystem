@@ -63,13 +63,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, getCurrentInstance } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { listMyAdoption, delMyAdoption } from '@/api/adoption/adoption'
 import { ADOPTION_STATUS, adoptionStatusText } from '@/utils/business'
 import PublicHeader from '@/components/PublicHeader'
 
 const { proxy } = getCurrentInstance()
 const year = new Date().getFullYear()
+
+// 页面卸载时取消在途请求，避免快速切页堆积“孤儿请求”
+const abortCtrl = new AbortController()
+onBeforeUnmount(() => abortCtrl.abort())
 
 const list = ref([])
 const total = ref(0)
@@ -111,10 +115,13 @@ function formatTime(time) {
 
 function getList() {
   loading.value = true
-  listMyAdoption({ ...queryParams }).then(res => {
+  listMyAdoption({ ...queryParams }, { signal: abortCtrl.signal }).then(res => {
     list.value = res.rows || []
     total.value = res.total || 0
-  }).catch(() => {
+  }).catch(err => {
+    if (err && (err.code === 'ERR_CANCELED' || err.name === 'CanceledError')) return
+    list.value = []
+    total.value = 0
     proxy.$modal.msgError('获取申请列表失败')
   }).finally(() => {
     loading.value = false

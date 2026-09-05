@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { Close, Delete } from '@element-plus/icons-vue'
 import { streamChat } from '@/api/ai/chat'
 
@@ -94,6 +94,15 @@ const input = ref('')
 const streaming = ref(false)
 const messages = ref([])
 const msgBox = ref(null)
+let streamController = null
+
+onBeforeUnmount(() => {
+  // 切页/组件卸载时中止仍在进行的 AI 流式请求
+  if (streamController) {
+    streamController.abort()
+    streamController = null
+  }
+})
 
 const quickQuestions = [
   '系统有哪些功能？',
@@ -135,7 +144,7 @@ function send(text) {
 
   const last = () => messages.value[messages.value.length - 1]
 
-  streamChat(
+  streamController = streamChat(
     { message: question, history },
     {
       onContent: chunk => {
@@ -143,10 +152,12 @@ function send(text) {
         scrollToBottom()
       },
       onDone: () => {
+        streamController = null
         streaming.value = false
         scrollToBottom()
       },
       onError: msg => {
+        streamController = null
         last().content = last().content || `抱歉，${msg}`
         streaming.value = false
         scrollToBottom()

@@ -36,11 +36,12 @@ export function updateAdoption(data) {
 }
 
 // 查询当前登录用户自己的领养申请列表（用户端）
-export function listMyAdoption(query) {
+export function listMyAdoption(query, config) {
   return request({
     url: '/adoption/adoption/my',
     method: 'get',
-    params: query
+    params: query,
+    ...config
   })
 }
 

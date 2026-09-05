@@ -73,6 +73,8 @@ const useUserStore = defineStore(
       },
       // 退出系统
       logOut() {
+        // 断开 SSE（动态引入避免与 sse.js 循环依赖）
+        import('@/utils/sse').then(m => m.disconnect()).catch(() => {})
         return new Promise((resolve, reject) => {
           logout(this.token).then(() => {
             this.token = ''

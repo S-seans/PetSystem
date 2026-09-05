@@ -11,13 +11,23 @@ let downloadLoadingInstance
 // 是否显示重新登录
 export let isRelogin = { show: false }
 
+// 同类错误提示去重（5s 内同一条文案只弹一次），避免快速切页/连发请求导致提示风暴
+const toastCache = {}
+function dedupeToast(key) {
+  const now = Date.now()
+  const last = toastCache[key]
+  if (last && now - last < 5000) return false
+  toastCache[key] = now
+  return true
+}
+
 axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 // 创建axios实例
 const service = axios.create({
   // axios中请求配置有baseURL选项，表示请求URL公共部分
   baseURL: import.meta.env.VITE_APP_BASE_API,
-  // 超时
-  timeout: 10000
+  // 超时（dev 走 Vite 代理，首次冷编译可能较慢，放宽到 30s）
+  timeout: import.meta.env.DEV ? 30000 : 10000
 })
 
 // request拦截器
@@ -111,13 +121,13 @@ service.interceptors.response.use(res => {
       }
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === 500) {
-      ElMessage({ message: msg, type: 'error' })
+      if (dedupeToast(msg)) ElMessage({ message: msg, type: 'error' })
       return Promise.reject(new Error(msg))
     } else if (code === 601) {
-      ElMessage({ message: msg, type: 'warning' })
+      if (dedupeToast(msg)) ElMessage({ message: msg, type: 'warning' })
       return Promise.reject(new Error(msg))
     } else if (code !== 200) {
-      ElNotification.error({ title: msg })
+      if (dedupeToast(msg)) ElNotification.error({ title: msg })
       return Promise.reject('error')
     } else {
       return  Promise.resolve(res.data)
@@ -133,7 +143,7 @@ service.interceptors.response.use(res => {
     } else if (message.includes("Request failed with status code")) {
       message = "系统接口" + message.substr(message.length - 3) + "异常"
     }
-    ElMessage({ message: message, type: 'error', duration: 5 * 1000 })
+    if (dedupeToast(message)) ElMessage({ message: message, type: 'error', duration: 5 * 1000 })
     return Promise.reject(error)
   }
 )
